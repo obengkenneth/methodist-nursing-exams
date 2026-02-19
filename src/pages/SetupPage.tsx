@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { PasswordInput } from "@/components/ui/password-input";
 import mugLogo from "@/assets/mug-logo.png";
 
 /**
@@ -36,14 +37,24 @@ const SetupPage: React.FC = () => {
 
     const userId = signUpData.user.id;
 
-    await supabase.from("profiles").insert({
+    const { error: profileError } = await supabase.from("profiles").insert({
       user_id: userId,
       full_name: form.full_name.trim(),
       email: form.email.trim(),
       is_active: true,
     });
+    if (profileError) {
+      setError(profileError.message ?? "Failed to create profile.");
+      setSaving(false);
+      return;
+    }
 
-    await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+    const { error: roleError } = await supabase.from("user_roles").insert({ user_id: userId, role: "admin" });
+    if (roleError) {
+      setError(roleError.message ?? "Failed to assign admin role. You may need to run the latest migration (allow first admin user_roles).");
+      setSaving(false);
+      return;
+    }
 
     setSuccess("Admin account created. You can now log in.");
     setSaving(false);
@@ -51,8 +62,8 @@ const SetupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <div className="bg-primary-dark py-2 px-6">
+    <div className="min-h-screen auth-page-bg flex flex-col">
+      <div className="bg-primary-dark py-2 px-6 shadow-sm">
         <p className="text-xs text-primary-foreground/70 text-center">
           Methodist University Ghana — Initial System Setup
         </p>
@@ -64,7 +75,7 @@ const SetupPage: React.FC = () => {
             <h1 className="font-heading text-xl font-medium text-foreground">Administrator Setup</h1>
             <p className="text-sm text-muted-foreground mt-1">Create the first administrator account</p>
           </div>
-          <div className="institution-card p-8">
+          <div className="institution-card card-elevated rounded-[10px] border-t-4 border-primary p-8">
             <div className="p-3 bg-muted border border-border rounded mb-5 text-xs text-muted-foreground">
               This page is for initial system setup only. Use setup key: <strong>MUG-NURSING-SETUP-2024</strong>
             </div>
@@ -73,26 +84,26 @@ const SetupPage: React.FC = () => {
             <form onSubmit={handleSetup} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Setup Key *</label>
-                <input type="password" value={form.setupKey} onChange={e => setForm(p => ({ ...p, setupKey: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                <PasswordInput value={form.setupKey} onChange={e => setForm(p => ({ ...p, setupKey: e.target.value }))}
+                  className="input-focus w-full px-3 py-2.5 pr-10 text-sm border border-input rounded-md bg-card text-foreground" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Full Name *</label>
                 <input value={form.full_name} onChange={e => setForm(p => ({ ...p, full_name: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                  className="input-focus w-full px-3 py-2.5 text-sm border border-input rounded-md bg-card text-foreground" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Email *</label>
                 <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                  className="input-focus w-full px-3 py-2.5 text-sm border border-input rounded-md bg-card text-foreground" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Password *</label>
-                <input type="password" value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                <PasswordInput value={form.password} onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
+                  className="input-focus w-full px-3 py-2.5 pr-10 text-sm border border-input rounded-md bg-card text-foreground" />
               </div>
               <button type="submit" disabled={saving}
-                className="w-full bg-primary text-primary-foreground py-2.5 rounded-md text-sm font-medium hover:bg-primary-dark transition-colors disabled:opacity-60 mt-2">
+                className="btn-primary w-full py-2.5 mt-2 disabled:opacity-60 disabled:transform-none disabled:hover:shadow-none">
                 {saving ? "Creating Account..." : "Create Admin Account"}
               </button>
             </form>

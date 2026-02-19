@@ -1,1 +1,6 @@
 project_id = "zfgcwkyihnmrtpzqctoe"
+
+# Skip gateway JWT verification so the request reaches the function with the Authorization header.
+# The function validates the JWT and admin role itself (required for new JWT signing keys / ES256).
+[functions.update-student-password]
+verify_jwt = false

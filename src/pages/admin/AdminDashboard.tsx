@@ -10,7 +10,7 @@ const AdminDashboard: React.FC = () => {
     const load = async () => {
       const [{ count: tests }, { count: students }, { count: results }, { count: questions }] = await Promise.all([
         supabase.from("tests").select("id", { count: "exact", head: true }),
-        supabase.from("profiles").select("id", { count: "exact", head: true }),
+        supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "student"),
         supabase.from("results").select("id", { count: "exact", head: true }),
         supabase.from("questions").select("id", { count: "exact", head: true }),
       ]);
@@ -36,11 +36,17 @@ const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {cards.map(c => {
+        {cards.map((c, i) => {
           const Icon = c.icon;
           return (
-            <div key={c.label} className="institution-card p-4">
-              <Icon size={18} className="text-primary mb-2" />
+            <div
+              key={c.label}
+              className="institution-card card-hover border-l border-primary p-4 stat-card-stagger"
+              style={{ animationDelay: `${i * 60}ms` }}
+            >
+              <div className="stat-card-icon mb-3">
+                <Icon size={18} />
+              </div>
               <p className="font-heading text-2xl font-medium text-foreground">{c.value}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{c.label}</p>
             </div>

@@ -93,7 +93,7 @@ const AdminQuestions: React.FC = () => {
             <h2 className="font-heading text-base font-medium text-foreground">{testTitle}</h2>
             <p className="text-sm text-muted-foreground">{questions.length} question(s)</p>
           </div>
-          <button onClick={openCreate} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm hover:bg-primary-dark transition-colors">
+          <button onClick={openCreate} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
             <Plus size={16} />
             Add Question
           </button>
@@ -144,7 +144,7 @@ const AdminQuestions: React.FC = () => {
       )}
 
       {showForm && (
-        <div className="fixed inset-0 bg-foreground/20 flex items-start justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-start justify-center z-50 p-4 overflow-y-auto">
           <div className="institution-card p-6 max-w-2xl w-full my-8">
             <h3 className="font-heading font-medium text-foreground mb-4">
               {editQ ? "Edit Question" : "Add New Question"}
@@ -154,21 +154,21 @@ const AdminQuestions: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Question Text *</label>
                 <textarea value={form.question_text} onChange={e => setForm(p => ({ ...p, question_text: e.target.value }))}
-                  rows={3} className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none" />
+                  rows={3} className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground resize-none" />
               </div>
               {(["a", "b", "c", "d"] as const).map(opt => (
                 <div key={opt}>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Option {opt.toUpperCase()} *</label>
                   <input value={form[`option_${opt}` as keyof typeof form] as string}
                     onChange={e => setForm(p => ({ ...p, [`option_${opt}`]: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                    className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
                 </div>
               ))}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Correct Answer *</label>
                   <select value={form.correct_option} onChange={e => setForm(p => ({ ...p, correct_option: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                    className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground">
                     <option value="a">Option A</option>
                     <option value="b">Option B</option>
                     <option value="c">Option C</option>
@@ -178,19 +178,19 @@ const AdminQuestions: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Marks</label>
                   <input type="number" min={1} value={form.marks} onChange={e => setForm(p => ({ ...p, marks: Number(e.target.value) }))}
-                    className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                    className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Rationale (optional)</label>
                 <textarea value={form.rationale} onChange={e => setForm(p => ({ ...p, rationale: e.target.value }))}
                   rows={2} placeholder="Explain why this answer is correct..."
-                  className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none" />
+                  className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground resize-none" />
               </div>
             </div>
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2 border border-border rounded-md text-sm text-foreground hover:bg-muted transition-colors">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary-dark transition-colors disabled:opacity-60">
+              <button onClick={() => setShowForm(false)} className="btn-outline flex-1 py-2 text-sm">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 py-2 text-sm disabled:opacity-60 disabled:transform-none disabled:hover:shadow-none">
                 {saving ? "Saving..." : editQ ? "Save Changes" : "Add Question"}
               </button>
             </div>

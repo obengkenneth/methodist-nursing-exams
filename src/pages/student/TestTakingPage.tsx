@@ -20,6 +20,7 @@ interface TestInfo {
   title: string;
   duration_minutes: number;
   description: string | null;
+  passing_percentage?: number;
 }
 
 const OPTIONS: Array<{ key: "a" | "b" | "c" | "d"; label: string }> = [
@@ -48,7 +49,7 @@ const TestTakingPage: React.FC = () => {
     if (!testId || !user) return;
     const load = async () => {
       const [{ data: testData }, { data: questionsData }, { data: existingResult }] = await Promise.all([
-        supabase.from("tests").select("id, title, duration_minutes, description, allow_retake").eq("id", testId).single(),
+        supabase.from("tests").select("id, title, duration_minutes, description, allow_retake, passing_percentage").eq("id", testId).single(),
         supabase.from("questions").select("id, question_text, option_a, option_b, option_c, option_d, order_index").eq("test_id", testId).order("order_index"),
         supabase.from("results").select("id").eq("student_id", user.id).eq("test_id", testId).maybeSingle(),
       ]);
@@ -84,43 +85,68 @@ const TestTakingPage: React.FC = () => {
     let score = 0;
     const totalMarks = correctData.reduce((s, q) => s + q.marks, 0);
 
-    // Delete existing result if retake
-    await supabase.from("results").delete().eq("student_id", user.id).eq("test_id", test.id);
-
-    const { data: result } = await supabase
-      .from("results")
-      .insert({
-        student_id: user.id,
-        test_id: test.id,
-        score: 0,
-        total_marks: totalMarks,
-        percentage: 0,
-        passed: false,
-      })
-      .select()
-      .single();
-
-    if (!result) { setSubmitting(false); return; }
-
     const answerRows = correctData.map(q => {
       const selected = answers[q.id] ?? null;
       const isCorrect = selected === q.correct_option;
       if (isCorrect) score += q.marks;
       return {
-        result_id: result.id,
         question_id: q.id,
         selected_option: selected,
         is_correct: isCorrect,
       };
     });
 
-    await supabase.from("answers").insert(answerRows);
-
     const percentage = totalMarks > 0 ? (score / totalMarks) * 100 : 0;
-    await supabase
+    const passed = percentage >= (test.passing_percentage ?? 50);
+    const roundedPct = Math.round(percentage * 100) / 100;
+
+    // Check for existing result (retake): update instead of delete+insert to avoid unique constraint
+    const { data: existingResult } = await supabase
       .from("results")
-      .update({ score, percentage: Math.round(percentage * 100) / 100, passed: percentage >= 50 })
-      .eq("id", result.id);
+      .select("id")
+      .eq("student_id", user.id)
+      .eq("test_id", test.id)
+      .maybeSingle();
+
+    if (existingResult) {
+      // Retake: delete old answers, update result row, insert new answers
+      await supabase.from("answers").delete().eq("result_id", existingResult.id);
+      await supabase
+        .from("results")
+        .update({
+          score,
+          total_marks: totalMarks,
+          percentage: roundedPct,
+          passed,
+          submitted_at: new Date().toISOString(),
+        })
+        .eq("id", existingResult.id);
+      await supabase.from("answers").insert(
+        answerRows.map(row => ({ ...row, result_id: existingResult.id }))
+      );
+    } else {
+      // First attempt: insert new result and answers
+      const { data: result } = await supabase
+        .from("results")
+        .insert({
+          student_id: user.id,
+          test_id: test.id,
+          score,
+          total_marks: totalMarks,
+          percentage: roundedPct,
+          passed,
+        })
+        .select()
+        .single();
+
+      if (!result) {
+        setSubmitting(false);
+        return;
+      }
+      await supabase.from("answers").insert(
+        answerRows.map(row => ({ ...row, result_id: result.id }))
+      );
+    }
 
     navigate(`/dashboard/results/${test.id}`);
   }, [test, user, submitting, answers, navigate]);
@@ -159,7 +185,7 @@ const TestTakingPage: React.FC = () => {
           </p>
           <button
             onClick={() => navigate("/dashboard")}
-            className="bg-primary text-primary-foreground px-5 py-2 rounded-md text-sm hover:bg-primary-dark transition-colors"
+            className="btn-primary px-5 py-2 text-sm"
           >
             Back to Dashboard
           </button>
@@ -222,12 +248,44 @@ const TestTakingPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Progress bar */}
-          <div className="w-full bg-muted rounded-full h-1 mb-8">
+          {/* Progress bar: filled by number of questions answered */}
+          <div className="w-full bg-muted rounded-full h-1 mb-6">
             <div
-              className="bg-primary h-1 rounded-full transition-all"
-              style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
+              className="bg-primary h-1 rounded-full transition-all duration-300"
+              style={{ width: `${questions.length ? (answered / questions.length) * 100 : 0}%` }}
             />
+          </div>
+
+          {/* Question navigator — mobile: fixed-height horizontal scroll (doesn't grow with question count) */}
+          <div className="lg:hidden mb-6">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Question Navigator
+            </p>
+            <div className="flex flex-nowrap gap-1.5 overflow-x-auto overflow-y-hidden py-1 -mx-1 min-h-[2.25rem] scroll-smooth" style={{ scrollbarGutter: 'stable' }}>
+              {questions.map((q, i) => {
+                const isAnswered = !!answers[q.id];
+                const isCurrent = i === currentIndex;
+                return (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => setCurrentIndex(i)}
+                    className={`flex-shrink-0 h-8 w-8 rounded text-xs font-medium transition-colors ${
+                      isCurrent
+                        ? "bg-primary text-primary-foreground"
+                        : isAnswered
+                        ? "bg-correct-bg text-correct border border-correct/30"
+                        : "bg-muted text-muted-foreground border border-border hover:border-primary hover:text-primary"
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Answered {answered} · Unanswered {questions.length - answered}
+            </p>
           </div>
 
           {/* Question */}
@@ -278,14 +336,14 @@ const TestTakingPage: React.FC = () => {
             {isLast ? (
               <button
                 onClick={() => setShowSubmitConfirm(true)}
-                className="flex items-center gap-2 px-5 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary-dark transition-colors font-medium"
+                className="btn-primary flex items-center gap-2 px-5 py-2 text-sm font-medium"
               >
                 Submit Test
               </button>
             ) : (
               <button
                 onClick={() => setCurrentIndex(p => Math.min(questions.length - 1, p + 1))}
-                className="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary-dark transition-colors"
+                className="btn-primary flex items-center gap-2 px-4 py-2 text-sm"
               >
                 Next
                 <ChevronRight size={16} />
@@ -333,7 +391,7 @@ const TestTakingPage: React.FC = () => {
 
           <button
             onClick={() => setShowSubmitConfirm(true)}
-            className="mt-5 w-full bg-primary text-primary-foreground py-2 rounded-md text-xs font-medium hover:bg-primary-dark transition-colors"
+            className="btn-primary mt-5 w-full py-2 text-xs font-medium"
           >
             Submit Test
           </button>
@@ -342,7 +400,7 @@ const TestTakingPage: React.FC = () => {
 
       {/* Submit confirmation dialog */}
       {showSubmitConfirm && (
-        <div className="fixed inset-0 bg-foreground/20 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="institution-card p-6 max-w-sm w-full">
             <h3 className="font-heading font-medium text-foreground mb-2">Submit Test?</h3>
             <p className="text-sm text-muted-foreground mb-1">
@@ -359,14 +417,14 @@ const TestTakingPage: React.FC = () => {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowSubmitConfirm(false)}
-                className="flex-1 py-2 px-4 text-sm border border-border rounded-md text-foreground hover:bg-muted transition-colors"
+                className="btn-outline flex-1 py-2 px-4 text-sm"
               >
                 Continue Exam
               </button>
               <button
                 onClick={() => handleSubmit(false)}
                 disabled={submitting}
-                className="flex-1 py-2 px-4 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary-dark transition-colors disabled:opacity-60"
+                className="btn-primary flex-1 py-2 px-4 text-sm disabled:opacity-60 disabled:transform-none disabled:hover:shadow-none"
               >
                 {submitting ? "Submitting..." : "Submit"}
               </button>

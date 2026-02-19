@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useParams, Link } from "react-router-dom";
 import { SidebarLayout } from "@/components/SidebarLayout";
+import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
 
 interface ResultDetail {
@@ -13,6 +12,7 @@ interface ResultDetail {
   passed: boolean;
   submitted_at: string;
   test_title: string;
+  student_name: string;
 }
 
 interface AnswerDetail {
@@ -30,34 +30,31 @@ interface AnswerDetail {
 
 const OPTIONS: Record<string, string> = { a: "A", b: "B", c: "C", d: "D" };
 
-const ResultsPage: React.FC = () => {
-  const { testId } = useParams<{ testId: string }>();
-  const { user } = useAuth();
-  const navigate = useNavigate();
+const AdminResultDetail: React.FC = () => {
+  const { resultId } = useParams<{ resultId: string }>();
   const [result, setResult] = useState<ResultDetail | null>(null);
   const [answers, setAnswers] = useState<AnswerDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
-    if (!testId || !user) return;
+    if (!resultId) return;
     const load = async () => {
-      // Get result
-      const { data: resultRow } = await supabase
+      const { data: resultRow, error: resultError } = await supabase
         .from("results")
-        .select("id, score, total_marks, percentage, passed, submitted_at, test_id")
-        .eq("student_id", user.id)
-        .eq("test_id", testId)
+        .select("id, score, total_marks, percentage, passed, submitted_at, student_id, test_id")
+        .eq("id", resultId)
         .maybeSingle();
 
-      if (!resultRow) { setLoading(false); return; }
+      if (resultError || !resultRow) {
+        setLoading(false);
+        return;
+      }
 
-      // Get test title and passing threshold (display pass/fail using current threshold)
-      const { data: testData } = await supabase
-        .from("tests")
-        .select("title, passing_percentage")
-        .eq("id", testId)
-        .single();
+      const [{ data: testData }, { data: profileData }] = await Promise.all([
+        supabase.from("tests").select("title, passing_percentage").eq("id", resultRow.test_id).single(),
+        supabase.from("profiles").select("full_name").eq("user_id", resultRow.student_id).maybeSingle(),
+      ]);
 
       const pct = Number(resultRow.percentage);
       const threshold = testData?.passing_percentage ?? 50;
@@ -70,17 +67,19 @@ const ResultsPage: React.FC = () => {
         passed: pct >= threshold,
         submitted_at: resultRow.submitted_at,
         test_title: testData?.title ?? "Test",
+        student_name: profileData?.full_name ?? "Unknown",
       });
 
-      // Get answers
       const { data: ansRows } = await supabase
         .from("answers")
         .select("question_id, selected_option, is_correct")
         .eq("result_id", resultRow.id);
 
-      if (!ansRows || ansRows.length === 0) { setLoading(false); return; }
+      if (!ansRows || ansRows.length === 0) {
+        setLoading(false);
+        return;
+      }
 
-      // Get questions
       const questionIds = ansRows.map(a => a.question_id);
       const { data: questionsData } = await supabase
         .from("questions")
@@ -88,7 +87,7 @@ const ResultsPage: React.FC = () => {
         .in("id", questionIds)
         .order("order_index");
 
-      const qMap: Record<string, typeof questionsData extends (infer T)[] | null ? T : never> = {};
+      const qMap: Record<string, (NonNullable<typeof questionsData>)[number]> = {};
       (questionsData ?? []).forEach(q => { qMap[q.id] = q; });
 
       const enriched: AnswerDetail[] = ansRows.map(a => {
@@ -107,7 +106,6 @@ const ResultsPage: React.FC = () => {
         };
       });
 
-      // Sort by question order
       enriched.sort((a, b) => {
         const qa = qMap[a.question_id];
         const qb = qMap[b.question_id];
@@ -118,23 +116,23 @@ const ResultsPage: React.FC = () => {
       setLoading(false);
     };
     load();
-  }, [testId, user]);
+  }, [resultId]);
 
   if (loading) {
     return (
-      <SidebarLayout title="Test Results">
-        <div className="text-sm text-muted-foreground">Loading results...</div>
+      <SidebarLayout title="Result Details">
+        <div className="text-sm text-muted-foreground">Loading...</div>
       </SidebarLayout>
     );
   }
 
   if (!result) {
     return (
-      <SidebarLayout title="Test Results">
+      <SidebarLayout title="Result Details">
         <div className="institution-card p-8 text-center text-sm text-muted-foreground">
-          No result found for this test.
+          Result not found.
           <div className="mt-4">
-            <Link to="/dashboard" className="text-primary hover:underline">Back to Dashboard</Link>
+            <Link to="/admin/results" className="text-primary hover:underline">Back to Student Results</Link>
           </div>
         </div>
       </SidebarLayout>
@@ -145,14 +143,13 @@ const ResultsPage: React.FC = () => {
   const incorrect = answers.filter(a => !a.is_correct).length;
 
   return (
-    <SidebarLayout title="Test Results">
-      {/* Summary card */}
+    <SidebarLayout title="Result Details">
       <div className="institution-card p-6 mb-6">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <h2 className="font-heading text-lg font-medium text-foreground">{result.test_title}</h2>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Submitted on {new Date(result.submitted_at).toLocaleString()}
+              {result.student_name} — Submitted on {new Date(result.submitted_at).toLocaleString()}
             </p>
           </div>
           <span className={`status-badge text-sm px-3 py-1 ${result.passed ? "status-pass" : "status-fail"}`}>
@@ -184,17 +181,13 @@ const ResultsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Answer review */}
       <div>
         <h3 className="font-heading text-base font-medium text-foreground mb-3">Answer Review</h3>
         <div className="space-y-3">
           {answers.map((ans, i) => {
             const isOpen = expanded[ans.question_id];
             return (
-              <div
-                key={ans.question_id}
-                className="institution-card overflow-hidden"
-              >
+              <div key={ans.question_id} className="institution-card overflow-hidden">
                 <button
                   onClick={() => setExpanded(p => ({ ...p, [ans.question_id]: !p[ans.question_id] }))}
                   className="w-full flex items-start justify-between p-4 text-left hover:bg-muted/30 transition-colors"
@@ -223,44 +216,35 @@ const ResultsPage: React.FC = () => {
                           <div
                             key={opt}
                             className={`flex items-center gap-3 p-2.5 rounded border text-sm ${
-                              isCorrect
-                                ? "border-correct/40 text-correct"
-                                : isSelected && !isCorrect
-                                ? "border-incorrect/40 text-incorrect"
+                              isCorrect ? "border-correct/40 text-correct"
+                                : isSelected && !isCorrect ? "border-incorrect/40 text-incorrect"
                                 : "border-border text-muted-foreground"
                             }`}
                             style={{
-                              background: isCorrect
-                                ? "hsl(var(--correct-bg))"
-                                : isSelected && !isCorrect
-                                ? "hsl(var(--incorrect-bg))"
+                              background: isCorrect ? "hsl(var(--correct-bg))"
+                                : isSelected && !isCorrect ? "hsl(var(--incorrect-bg))"
                                 : undefined,
                             }}
                           >
-                            <span className={`w-5 h-5 rounded flex items-center justify-center text-xs font-medium flex-shrink-0 text-primary-foreground`}
+                            <span
+                              className="w-5 h-5 rounded flex items-center justify-center text-xs font-medium flex-shrink-0 text-primary-foreground"
                               style={{
-                                background: isCorrect
-                                  ? "hsl(var(--correct))"
-                                  : isSelected && !isCorrect
-                                  ? "hsl(var(--incorrect))"
-                                  : "hsl(var(--muted))",
+                                background: isCorrect ? "hsl(var(--correct))" : isSelected && !isCorrect ? "hsl(var(--incorrect))" : "hsl(var(--muted))",
                                 color: isCorrect || (isSelected && !isCorrect) ? "white" : "hsl(var(--muted-foreground))",
-                              }}>
+                              }}
+                            >
                               {OPTIONS[opt]}
                             </span>
                             {text}
                             {isCorrect && <span className="ml-auto text-xs font-medium">Correct</span>}
-                            {isSelected && !isCorrect && <span className="ml-auto text-xs font-medium">Your answer</span>}
+                            {isSelected && !isCorrect && <span className="ml-auto text-xs font-medium">Student&apos;s answer</span>}
                           </div>
                         );
                       })}
                     </div>
-
                     {ans.rationale && (
                       <div className="p-3 bg-muted rounded border border-border">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">
-                          Rationale
-                        </p>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-1">Rationale</p>
                         <p className="text-sm text-foreground">{ans.rationale}</p>
                       </div>
                     )}
@@ -273,15 +257,15 @@ const ResultsPage: React.FC = () => {
       </div>
 
       <div className="mt-6">
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="btn-primary px-5 py-2 text-sm"
+        <Link
+          to="/admin/results"
+          className="btn-primary inline-block px-5 py-2 text-sm"
         >
-          Back to Dashboard
-        </button>
+          Back to Student Results
+        </Link>
       </div>
     </SidebarLayout>
   );
 };
 
-export default ResultsPage;
+export default AdminResultDetail;

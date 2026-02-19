@@ -14,10 +14,11 @@
     --accent-red: 0 65% 47%;         /* #C53030 */
     --accent-red-foreground: 0 0% 100%;
 
-    --background: 216 33% 96%;       /* #F5F7FA */
-    --foreground: 220 20% 15%;       /* dark text */
+    /* Slightly warmer base */
+    --background: 216 25% 97%;
+    --foreground: 220 20% 15%;
 
-    --card: 0 0% 100%;               /* #FFFFFF */
+    --card: 0 0% 100%;
     --card-foreground: 220 20% 15%;
 
     --popover: 0 0% 100%;
@@ -35,20 +36,27 @@
     --destructive: 0 65% 47%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 216 20% 85%;           /* #DCE1E7 */
-    --input: 216 20% 85%;
+    /* Softer border */
+    --border: 216 22% 88%;
+    --input: 216 22% 88%;
     --ring: 220 71% 40%;
 
-    --radius: 0.375rem;              /* 6px */
+    --radius: 0.375rem;              /* 6px buttons/inputs */
 
-    /* Sidebar */
-    --sidebar-background: 220 71% 30%;
+    /* Card shadows */
+    --shadow-card: 0 2px 8px rgba(30, 77, 183, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 8px 24px rgba(30, 77, 183, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+    --shadow-card-hover: 0 4px 12px rgba(30, 77, 183, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-btn-primary: 0 2px 6px rgba(30, 77, 183, 0.25);
+
+    /* Sidebar - deeper dark */
+    --sidebar-background: 220 55% 22%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 220 71% 30%;
-    --sidebar-accent: 220 60% 35%;
+    --sidebar-accent: 220 50% 28%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 60% 25%;
+    --sidebar-border: 220 50% 18%;
     --sidebar-ring: 0 0% 80%;
 
     /* Typography */
@@ -86,12 +94,46 @@
 
 @layer components {
   .institution-card {
-    @apply bg-card border border-border rounded-lg;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    @apply bg-card border border-border rounded-lg transition-all duration-200 ease-out;
+    box-shadow: var(--shadow-card);
+  }
+
+  .institution-card.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+  }
+
+  .institution-card.card-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .stat-card-icon {
+    @apply flex items-center justify-center rounded-lg w-10 h-10 flex-shrink-0;
+    background: hsl(var(--primary) / 0.12);
+    color: hsl(var(--primary));
+  }
+  .stat-card-icon.stat-card-icon-correct {
+    background: hsl(var(--correct) / 0.12);
+    color: hsl(var(--correct));
+  }
+
+  @keyframes stat-card-enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .stat-card-stagger {
+    animation: stat-card-enter 0.25s ease-out forwards;
+    opacity: 0;
   }
 
   .exam-option {
-    @apply flex items-start gap-3 p-3 border border-border rounded cursor-pointer transition-colors;
+    @apply flex items-start gap-3 p-3 border border-border rounded cursor-pointer transition-all duration-200 ease-out;
     background: hsl(var(--card));
   }
 
@@ -117,7 +159,7 @@
 
   .page-header {
     @apply border-b border-border bg-card px-6 py-4;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-card);
   }
 
   .status-badge {
@@ -135,7 +177,7 @@
   }
 
   .nav-sidebar-link {
-    @apply flex items-center gap-3 px-4 py-2.5 text-sm rounded transition-colors;
+    @apply flex items-center gap-3 px-4 py-2.5 text-sm rounded transition-all duration-200 ease-out;
     color: hsl(var(--sidebar-foreground) / 0.8);
   }
 
@@ -148,10 +190,13 @@
     background: hsl(var(--sidebar-accent));
     color: hsl(var(--sidebar-foreground));
     font-weight: 500;
+    border-left: 3px solid hsl(var(--sidebar-foreground));
+    margin-left: 0;
+    padding-left: calc(1rem - 3px);
   }
 
   .data-table th {
-    @apply text-xs font-medium uppercase tracking-wide;
+    @apply text-xs font-semibold uppercase tracking-wide;
     color: hsl(var(--muted-foreground));
     background: hsl(var(--muted));
   }
@@ -164,7 +209,44 @@
     @apply border-b-0;
   }
 
+  .data-table tbody tr {
+    @apply transition-colors duration-150;
+  }
+
   .data-table tbody tr:hover {
-    background: hsl(var(--muted));
+    background: hsl(var(--primary) / 0.04);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md px-4 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-200 ease-out;
+    background: hsl(var(--primary));
+  }
+
+  .btn-primary:hover {
+    background: hsl(var(--primary-dark));
+    box-shadow: var(--shadow-btn-primary);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-md border border-border bg-transparent px-4 py-2.5 text-sm font-medium text-foreground transition-all duration-200 ease-out hover:bg-muted hover:border-border;
+  }
+
+  .btn-outline:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2;
+  }
+
+  .input-focus {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:shadow-sm;
+  }
+
+  .auth-page-bg {
+    background-color: hsl(var(--background));
+    background-image: radial-gradient(hsl(var(--primary) / 0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }

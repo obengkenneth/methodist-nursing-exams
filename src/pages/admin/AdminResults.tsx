@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { SidebarLayout } from "@/components/SidebarLayout";
 import { supabase } from "@/integrations/supabase/client";
+import { Eye } from "lucide-react";
 
 interface ResultRow {
   id: string;
@@ -27,24 +29,29 @@ const AdminResults: React.FC = () => {
 
       const [{ data: profilesData }, { data: testsData }] = await Promise.all([
         supabase.from("profiles").select("user_id, full_name"),
-        supabase.from("tests").select("id, title"),
+        supabase.from("tests").select("id, title, passing_percentage"),
       ]);
 
       const profileMap: Record<string, string> = {};
       (profilesData ?? []).forEach(p => { profileMap[p.user_id] = p.full_name; });
-      const testMap: Record<string, string> = {};
-      (testsData ?? []).forEach(t => { testMap[t.id] = t.title; });
+      const testMap: Record<string, { title: string; passing_percentage?: number }> = {};
+      (testsData ?? []).forEach(t => { testMap[t.id] = { title: t.title, passing_percentage: t.passing_percentage }; });
 
-      setResults((resultsData ?? []).map(r => ({
-        id: r.id,
-        score: r.score,
-        total_marks: r.total_marks,
-        percentage: Number(r.percentage),
-        passed: r.passed,
-        submitted_at: r.submitted_at,
-        student_name: profileMap[r.student_id] ?? "Unknown",
-        test_title: testMap[r.test_id] ?? "Unknown",
-      })));
+      setResults((resultsData ?? []).map(r => {
+        const pct = Number(r.percentage);
+        const test = testMap[r.test_id];
+        const threshold = test?.passing_percentage ?? 50;
+        return {
+          id: r.id,
+          score: r.score,
+          total_marks: r.total_marks,
+          percentage: pct,
+          passed: pct >= threshold,
+          submitted_at: r.submitted_at,
+          student_name: profileMap[r.student_id] ?? "Unknown",
+          test_title: test?.title ?? "Unknown",
+        };
+      }));
       setLoading(false);
     };
     load();
@@ -74,8 +81,8 @@ const AdminResults: React.FC = () => {
           {results.length === 0 ? "No results submitted yet." : "No results match your search."}
         </div>
       ) : (
-        <div className="institution-card overflow-hidden">
-          <table className="w-full data-table">
+        <div className="institution-card overflow-hidden overflow-x-auto">
+          <table className="w-full data-table min-w-[600px]">
             <thead>
               <tr>
                 <th className="text-left">Student</th>
@@ -84,6 +91,7 @@ const AdminResults: React.FC = () => {
                 <th className="text-left">Percentage</th>
                 <th className="text-left">Status</th>
                 <th className="text-left">Date</th>
+                <th className="text-left">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -100,6 +108,15 @@ const AdminResults: React.FC = () => {
                   </td>
                   <td className="text-sm text-muted-foreground">
                     {new Date(r.submitted_at).toLocaleDateString()}
+                  </td>
+                  <td>
+                    <Link
+                      to={`/admin/results/${r.id}`}
+                      className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                    >
+                      <Eye size={14} />
+                      View details
+                    </Link>
                   </td>
                 </tr>
               ))}

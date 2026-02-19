@@ -12,6 +12,7 @@ interface Test {
   duration_minutes: number;
   is_active: boolean;
   allow_retake: boolean;
+  passing_percentage?: number;
   created_at: string;
   question_count?: number;
 }
@@ -22,12 +23,12 @@ const AdminTests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editTest, setEditTest] = useState<Test | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false });
+  const [form, setForm] = useState({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50 });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const loadTests = async () => {
-    const { data } = await supabase.from("tests").select("id, title, description, duration_minutes, is_active, allow_retake, created_at").order("created_at", { ascending: false });
+    const { data } = await supabase.from("tests").select("id, title, description, duration_minutes, is_active, allow_retake, passing_percentage, created_at").order("created_at", { ascending: false });
     const tests = data ?? [];
 
     const withCounts = await Promise.all(tests.map(async t => {
@@ -42,14 +43,14 @@ const AdminTests: React.FC = () => {
 
   const openCreate = () => {
     setEditTest(null);
-    setForm({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false });
+    setForm({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50 });
     setError("");
     setShowForm(true);
   };
 
   const openEdit = (t: Test) => {
     setEditTest(t);
-    setForm({ title: t.title, description: t.description ?? "", duration_minutes: t.duration_minutes, is_active: t.is_active, allow_retake: t.allow_retake });
+    setForm({ title: t.title, description: t.description ?? "", duration_minutes: t.duration_minutes, is_active: t.is_active, allow_retake: t.allow_retake, passing_percentage: t.passing_percentage ?? 50 });
     setError("");
     setShowForm(true);
   };
@@ -59,9 +60,9 @@ const AdminTests: React.FC = () => {
     setSaving(true);
     setError("");
     if (editTest) {
-      await supabase.from("tests").update({ title: form.title.trim(), description: form.description || null, duration_minutes: form.duration_minutes, is_active: form.is_active, allow_retake: form.allow_retake }).eq("id", editTest.id);
+      await supabase.from("tests").update({ title: form.title.trim(), description: form.description || null, duration_minutes: form.duration_minutes, is_active: form.is_active, allow_retake: form.allow_retake, passing_percentage: form.passing_percentage }).eq("id", editTest.id);
     } else {
-      await supabase.from("tests").insert({ title: form.title.trim(), description: form.description || null, duration_minutes: form.duration_minutes, is_active: form.is_active, allow_retake: form.allow_retake, created_by: user?.id });
+      await supabase.from("tests").insert({ title: form.title.trim(), description: form.description || null, duration_minutes: form.duration_minutes, is_active: form.is_active, allow_retake: form.allow_retake, passing_percentage: form.passing_percentage, created_by: user?.id });
     }
     setSaving(false);
     setShowForm(false);
@@ -83,7 +84,7 @@ const AdminTests: React.FC = () => {
     <SidebarLayout title="Manage Tests">
       <div className="flex items-center justify-between mb-5">
         <p className="text-sm text-muted-foreground">{tests.length} test(s) total</p>
-        <button onClick={openCreate} className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm hover:bg-primary-dark transition-colors">
+        <button onClick={openCreate} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
           <Plus size={16} />
           Create Test
         </button>
@@ -96,8 +97,8 @@ const AdminTests: React.FC = () => {
           No tests created yet. Click "Create Test" to get started.
         </div>
       ) : (
-        <div className="institution-card overflow-hidden">
-          <table className="w-full data-table">
+        <div className="institution-card overflow-hidden overflow-x-auto">
+          <table className="w-full data-table min-w-[640px]">
             <thead>
               <tr>
                 <th className="text-left">Title</th>
@@ -150,7 +151,7 @@ const AdminTests: React.FC = () => {
 
       {/* Form modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-foreground/20 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="institution-card p-6 max-w-lg w-full">
             <h3 className="font-heading font-medium text-foreground mb-4">
               {editTest ? "Edit Test" : "Create New Test"}
@@ -160,17 +161,23 @@ const AdminTests: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Test Title *</label>
                 <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                  className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Description</label>
                 <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-                  rows={2} className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none" />
+                  rows={2} className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground resize-none" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Duration (minutes)</label>
                 <input type="number" min={1} value={form.duration_minutes} onChange={e => setForm(p => ({ ...p, duration_minutes: Number(e.target.value) }))}
-                  className="w-full px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+                  className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Passing percentage (%)</label>
+                <input type="number" min={0} max={100} value={form.passing_percentage} onChange={e => setForm(p => ({ ...p, passing_percentage: Math.min(100, Math.max(0, Number(e.target.value) || 0)) }))}
+                  className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
+                <p className="text-xs text-muted-foreground mt-1">Student needs this % or higher to pass (default 50).</p>
               </div>
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
@@ -184,10 +191,8 @@ const AdminTests: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-3 mt-5">
-              <button onClick={() => setShowForm(false)} className="flex-1 py-2 border border-border rounded-md text-sm text-foreground hover:bg-muted transition-colors">
-                Cancel
-              </button>
-              <button onClick={handleSave} disabled={saving} className="flex-1 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary-dark transition-colors disabled:opacity-60">
+              <button onClick={() => setShowForm(false)} className="btn-outline flex-1 py-2 text-sm">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className="btn-primary flex-1 py-2 text-sm disabled:opacity-60 disabled:transform-none disabled:hover:shadow-none">
                 {saving ? "Saving..." : editTest ? "Save Changes" : "Create Test"}
               </button>
             </div>
