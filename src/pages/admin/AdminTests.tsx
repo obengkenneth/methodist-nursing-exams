@@ -27,7 +27,7 @@ const AdminTests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editTest, setEditTest] = useState<Test | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50, status: "active" as TestStatus, department: "" });
+  const [form, setForm] = useState({ title: "", description: "", duration_minutes: 60, allow_retake: false, passing_percentage: 50, status: "active" as TestStatus, department: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -60,7 +60,7 @@ const AdminTests: React.FC = () => {
 
   const openCreate = () => {
     setEditTest(null);
-    setForm({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50, status: "active", department: "" });
+    setForm({ title: "", description: "", duration_minutes: 60, allow_retake: false, passing_percentage: 50, status: "active", department: "" });
     setError("");
     setShowForm(true);
   };
@@ -71,7 +71,6 @@ const AdminTests: React.FC = () => {
       title: t.title,
       description: t.description ?? "",
       duration_minutes: t.duration_minutes,
-      is_active: t.is_active,
       allow_retake: t.allow_retake,
       passing_percentage: t.passing_percentage ?? 50,
       status: (t.status ?? "active") as TestStatus,
@@ -89,7 +88,7 @@ const AdminTests: React.FC = () => {
       title: form.title.trim(),
       description: form.description || null,
       duration_minutes: form.duration_minutes,
-      is_active: form.is_active,
+      is_active: form.status === "active",
       allow_retake: form.allow_retake,
       passing_percentage: form.passing_percentage,
       status: form.status,
@@ -254,11 +253,7 @@ const AdminTests: React.FC = () => {
                   className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
                 <p className="text-xs text-muted-foreground mt-1">Student needs this % or higher to pass (default 50).</p>
               </div>
-              <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                  <input type="checkbox" checked={form.is_active} onChange={e => setForm(p => ({ ...p, is_active: e.target.checked }))} className="rounded" />
-                  Active (visible to students)
-                </label>
+              <div>
                 <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
                   <input type="checkbox" checked={form.allow_retake} onChange={e => setForm(p => ({ ...p, allow_retake: e.target.checked }))} className="rounded" />
                   Allow retake

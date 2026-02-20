@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { SidebarLayout } from "@/components/SidebarLayout";
 import { supabase } from "@/integrations/supabase/client";
-import { CheckCircle, XCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle, XCircle, ChevronDown, ChevronUp, Flag } from "lucide-react";
 
 interface ResultDetail {
   id: string;
@@ -26,6 +26,7 @@ interface AnswerDetail {
   rationale: string | null;
   selected_option: string | null;
   is_correct: boolean;
+  flagged: boolean;
 }
 
 const OPTIONS: Record<string, string> = { a: "A", b: "B", c: "C", d: "D" };
@@ -72,7 +73,7 @@ const AdminResultDetail: React.FC = () => {
 
       const { data: ansRows } = await supabase
         .from("answers")
-        .select("question_id, selected_option, is_correct")
+        .select("question_id, selected_option, is_correct, flagged")
         .eq("result_id", resultRow.id);
 
       if (!ansRows || ansRows.length === 0) {
@@ -96,6 +97,7 @@ const AdminResultDetail: React.FC = () => {
           question_id: a.question_id,
           selected_option: a.selected_option,
           is_correct: a.is_correct,
+          flagged: (a as { flagged?: boolean }).flagged ?? false,
           question_text: q?.question_text ?? "",
           option_a: q?.option_a ?? "",
           option_b: q?.option_b ?? "",
@@ -219,7 +221,15 @@ const AdminResultDetail: React.FC = () => {
                       : <XCircle size={18} style={{ color: "hsl(var(--incorrect))" }} className="flex-shrink-0 mt-0.5" />
                     }
                     <div>
-                      <p className="text-xs text-muted-foreground mb-1">Question {i + 1}</p>
+                      <p className="text-xs text-muted-foreground mb-1 flex items-center gap-2 flex-wrap">
+                        <span>Question {i + 1}</span>
+                        {ans.flagged && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200 border border-amber-300/50 dark:border-amber-700/50">
+                            <Flag size={12} />
+                            Flagged
+                          </span>
+                        )}
+                      </p>
                       <p className="text-sm text-foreground">{ans.question_text}</p>
                     </div>
                   </div>

@@ -158,11 +158,16 @@ const TestTakingPage: React.FC = () => {
   }, [test, user, submitting, answers, navigate, timeLeft, flaggedIds]);
 
   useEffect(() => {
-    if (timeLeft <= 0 || submitting) return;
-    if (timeLeft === 0) { handleSubmit(true); return; }
-    const t = setTimeout(() => setTimeLeft(p => p - 1), 1000);
+    if (timeLeft <= 0) {
+      if (timeLeft === 0 && !submitting && test && user) {
+        handleSubmit(true);
+      }
+      return;
+    }
+    if (submitting) return;
+    const t = setTimeout(() => setTimeLeft(p => Math.max(0, p - 1)), 1000);
     return () => clearTimeout(t);
-  }, [timeLeft, submitting, handleSubmit]);
+  }, [timeLeft, submitting, handleSubmit, test, user]);
 
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
