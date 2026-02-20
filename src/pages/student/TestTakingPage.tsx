@@ -236,7 +236,7 @@ const TestTakingPage: React.FC = () => {
           <img src={mugLogo} alt="MUG" className="h-8 object-contain" />
           <div className="hidden md:block">
             <p className="font-heading font-medium text-sm text-foreground">{test.title}</p>
-            <p className="text-xs text-muted-foreground">School of Nursing and Midwifery</p>
+            <p className="text-xs text-muted-foreground">Faculty of Nursing and Midwifery</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -442,11 +442,11 @@ const TestTakingPage: React.FC = () => {
           <p className="text-xs text-muted-foreground">
             © {new Date().getFullYear()} Methodist University Ghana • Student Examination Portal
           </p>
-          <div className="flex gap-4 text-xs text-muted-foreground">
+          {/* <div className="flex gap-4 text-xs text-muted-foreground">
             <a href="#guidelines" className="hover:text-foreground transition-colors">Exam Guidelines</a>
             <a href="#support" className="hover:text-foreground transition-colors">Technical Support</a>
             <a href="#privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
-          </div>
+          </div> */}
         </div>
       </footer>
 

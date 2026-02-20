@@ -11,7 +11,7 @@ const LandingPage: React.FC = () => {
     <div className="min-h-screen auth-page-bg flex flex-col">
       <div className="bg-primary-dark border-b border-primary-dark py-2 px-6 shadow-sm">
         <p className="text-xs text-primary-foreground/70 text-center">
-          Methodist University Ghana — School of Nursing and Midwifery
+          Methodist University Ghana — Faculty of Nursing and Midwifery
         </p>
       </div>
 
@@ -26,7 +26,7 @@ const LandingPage: React.FC = () => {
             Nursing Exam Portal
           </h1>
           <p className="text-sm text-muted-foreground mb-8 max-w-sm mx-auto">
-            Access your exams and results for the School of Nursing and Midwifery.
+            Access your exams and results for the Faculty of Nursing and Midwifery.
           </p>
           <Link
             to="/login"

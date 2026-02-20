@@ -67,7 +67,7 @@ const LoginPage: React.FC = () => {
       <div className="sticky top-0 z-10 bg-primary-dark border-b border-primary-dark py-2 px-6">
         <p className="text-xs text-primary-foreground/70 text-center flex items-center justify-center gap-1.5">
           <GraduationCap size={14} className="flex-shrink-0" />
-          Methodist University Ghana — School of Nursing and Midwifery
+          Methodist University Ghana — Faculty of Nursing and Midwifery
         </p>
       </div>
 
@@ -84,7 +84,7 @@ const LoginPage: React.FC = () => {
               Nursing Exam Portal
             </h1>
             <p className="text-sm text-muted-foreground">
-              School of Nursing and Midwifery
+              Faculty of Nursing and Midwifery
             </p>
           </div>
 
