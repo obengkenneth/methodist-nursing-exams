@@ -191,12 +191,13 @@ const AdminTests: React.FC = () => {
                         <button onClick={() => openEdit(t)} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="Edit">
                           <Pencil size={15} />
                         </button>
-                        <Link to={`/admin/results?testId=${t.id}`} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="View Results">
-                          View Results
-                        </Link>
+                        
                         <button onClick={() => handleDelete(t.id)} className="p-1.5 text-muted-foreground hover:text-incorrect transition-colors" title="Delete">
                           <Trash2 size={15} />
                         </button>
+                        <Link to={`/admin/results?testId=${t.id}`} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="View Results">
+                          View Results
+                        </Link>
                       </div>
                     </td>
                   </tr>

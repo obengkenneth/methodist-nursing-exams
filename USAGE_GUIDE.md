@@ -26,7 +26,7 @@ This guide explains how to use the Nursing Exam Portal: how to create the first 
   4. Click **Create Admin Account**.
   5. When you see "Admin account created. You can now log in," you will be taken to the **Sign in** page after a few seconds.
   6. Sign in with the same **email** and **password**; you will then see the **Admin** area (overview and sidebar with Manage Tests, Manage Students, Student Results).
-- **Note:** Keep the setup key and first admin credentials secure. After the first admin is created, students are created only by administrators from the admin area.
+- **Note:** Keep the setup key and admin credentials secure. After the  admin is created, students are created only by administrators from the admin area.
 
 ---
 
