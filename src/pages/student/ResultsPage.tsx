@@ -171,13 +171,50 @@ const ResultsPage: React.FC = () => {
         : `${result.time_spent_seconds} sec`
       : null;
 
-  const handlePrint = () => window.print();
-  const handleDownloadPDF = () => window.print();
+  const handlePrint = () => {
+    // Set tab to "all" to show all questions
+    setTab("all");
+    // Expand all questions
+    const allExpanded: Record<string, boolean> = {};
+    answers.forEach(a => { allExpanded[a.question_id] = true; });
+    setExpanded(allExpanded);
+    // Wait for React to render, then print
+    // Use double RAF + timeout to ensure DOM is updated
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => window.print(), 200);
+      });
+    });
+  };
+
+  const handleDownloadPDF = () => {
+    // Set tab to "all" to show all questions
+    setTab("all");
+    // Expand all questions
+    const allExpanded: Record<string, boolean> = {};
+    answers.forEach(a => { allExpanded[a.question_id] = true; });
+    setExpanded(allExpanded);
+    // Wait for React to render, then print (user saves as PDF)
+    // Use double RAF + timeout to ensure DOM is updated
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setTimeout(() => window.print(), 200);
+      });
+    });
+  };
 
   return (
     <SidebarLayout title="Test Results">
+      {/* Print-only title */}
+      <div className="print-only hidden print:block mb-4">
+        <h1 className="font-heading text-2xl font-bold text-foreground">{result.test_title}</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Test Results — Completed on {submittedDate.toLocaleDateString()} at {submittedDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </p>
+      </div>
+
       {/* Breadcrumbs */}
-      <nav className="text-sm text-muted-foreground mb-4">
+      <nav className="no-print text-sm text-muted-foreground mb-4">
         <Link to="/dashboard" className="hover:text-foreground">Dashboard</Link>
         <span className="mx-2">/</span>
         <Link to="/dashboard/results" className="hover:text-foreground">Results</Link>
@@ -186,7 +223,7 @@ const ResultsPage: React.FC = () => {
       </nav>
 
       {/* Header with actions */}
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+      <div className="no-print flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
           <h2 className="font-heading text-xl font-medium text-foreground">{result.test_title}</h2>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -247,7 +284,7 @@ const ResultsPage: React.FC = () => {
       </div>
 
       {/* Question filter tabs (mockup: pill bar, active blue) — scroll on small screens */}
-      <div className="result-tabs mb-6 overflow-x-auto overflow-y-hidden min-w-0">
+      <div className="no-print result-tabs mb-6 overflow-x-auto overflow-y-hidden min-w-0">
         {(["all", "correct", "incorrect", "flagged"] as const).map((t) => (
           <button
             key={t}
@@ -343,7 +380,7 @@ const ResultsPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-6">
+      <div className="no-print mt-6">
         <button
           onClick={() => navigate("/dashboard")}
           className="btn-primary px-5 py-2 text-sm"

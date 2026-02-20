@@ -29,7 +29,7 @@ const LoginPage: React.FC = () => {
     }
   }, [user, loading]);
 
-  if (!loading && user) {
+  if (!loading && user && role) {
     return <Navigate to={role === "admin" ? "/admin" : "/dashboard"} replace />;
   }
 

@@ -103,7 +103,7 @@ const SidebarContent: React.FC<{
         style={{ color: "hsl(var(--sidebar-foreground))" }}
       >
         {collapsed ? <span className="text-red-500">♥</span> : (
-          <>Made with <span className="text-red-500 opacity-100">♥</span> by wondertechinnovations</>
+          <>Made with <span className="text-red-500 opacity-100">♥</span> by WonderTech Innovations</>
         )}
       </a>
     </div>
@@ -233,7 +233,7 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, title })
   );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="sidebar-layout flex min-h-screen">
       {/* Mobile: top bar with hamburger + sign out */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3 border-b border-border bg-card" style={{ boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }}>
         <button

@@ -313,3 +313,110 @@
     background: hsl(220 15% 35%);
   }
 }
+
+/* Print styles: clean results page output */
+@media print {
+  /* Hide layout chrome */
+  .sidebar-layout aside,
+  .sidebar-layout header,
+  .sidebar-layout > div > header {
+    display: none !important;
+  }
+
+  /* Hide mobile overlay */
+  .sidebar-layout > div:has([class*="md:hidden"]) {
+    display: none !important;
+  }
+
+  /* Hide no-print elements */
+  .no-print {
+    display: none !important;
+  }
+
+  /* Make main content full width */
+  .sidebar-layout > div.flex-1 {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .sidebar-layout main {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 1rem !important;
+    margin: 0 !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Ensure question cards don't break across pages */
+  .question-card-result {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  /* Force all question details to be visible in print (they're expanded via JS) */
+  .question-card-result > div[class*="border-t"],
+  .question-card-result > div[class*="px-5"] {
+    display: block !important;
+  }
+
+  /* Ensure all questions are visible (not just filtered) */
+  .question-card-result {
+    display: block !important;
+  }
+
+  /* Remove shadows and borders for cleaner print */
+  .question-card-result,
+  .rounded-xl {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+  }
+
+  /* Ensure text is readable (black on white) */
+  body {
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Hide chevron icons in question cards */
+  .question-card-result button svg:last-child {
+    display: none !important;
+  }
+
+  /* Make question cards non-interactive in print */
+  .question-card-result button {
+    pointer-events: none;
+    cursor: default;
+  }
+
+  /* Print-only title styling */
+  .print-only {
+    page-break-after: avoid;
+  }
+
+  .print-only h1 {
+    margin-bottom: 0.5rem;
+  }
+
+  /* Ensure summary cards print nicely */
+  .grid {
+    page-break-inside: avoid;
+  }
+
+  /* Better spacing for print */
+  .question-card-result {
+    margin-bottom: 1.5rem;
+  }
+
+  /* Ensure rationale is visible */
+  .rationale-heading {
+    color: #000 !important;
+    font-weight: 600;
+  }
+}

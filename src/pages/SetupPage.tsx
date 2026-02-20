@@ -73,12 +73,10 @@ const SetupPage: React.FC = () => {
           <div className="text-center mb-8">
             <img src={mugLogo} alt="MUG" className="h-16 mx-auto mb-4 object-contain" />
             <h1 className="font-heading text-xl font-medium text-foreground">Administrator Setup</h1>
-            <p className="text-sm text-muted-foreground mt-1">Create the first administrator account</p>
+            <p className="text-sm text-muted-foreground mt-1">Create  administrator account</p>
           </div>
           <div className="institution-card card-elevated rounded-[10px] border-t-4 border-primary p-8">
-            <div className="p-3 bg-muted border border-border rounded mb-5 text-xs text-muted-foreground">
-              This page is for initial system setup only. Use setup key: <strong>MUG-NURSING-SETUP-2024</strong>
-            </div>
+            
             {error && <p className="text-sm text-incorrect mb-4">{error}</p>}
             {success && <p className="text-sm text-correct mb-4">{success}</p>}
             <form onSubmit={handleSetup} className="space-y-4">
