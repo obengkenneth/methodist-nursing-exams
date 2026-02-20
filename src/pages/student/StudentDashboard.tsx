@@ -208,12 +208,19 @@ const StudentDashboard: React.FC = () => {
                   >
                     No questions yet
                   </button>
+                ) : test.completed && test.allow_retake ? (
+                  <Link
+                    to={`/dashboard/test/${test.id}`}
+                    className="btn-primary inline-flex mt-5 w-full justify-center px-4 py-3 text-sm font-medium rounded-lg"
+                  >
+                    Retake
+                  </Link>
                 ) : (
                   <Link
                     to={`/dashboard/test/${test.id}`}
                     className="btn-primary inline-flex mt-5 w-full justify-center px-4 py-3 text-sm font-medium rounded-lg"
                   >
-                    {test.completed ? "Retake" : "Start Exam"}
+                    Start Exam
                   </Link>
                 )}
               </div>

@@ -10,7 +10,7 @@ interface Question {
   option_a: string;
   option_b: string;
   option_c: string;
-  option_d: string;
+  option_d: string | null;
   correct_option: string;
   rationale: string | null;
   marks: number;
@@ -44,11 +44,12 @@ const AdminQuestions: React.FC = () => {
   useEffect(() => { loadData(); }, [testId]);
 
   const openCreate = () => { setEditQ(null); setForm(blank); setError(""); setShowForm(true); };
-  const openEdit = (q: Question) => { setEditQ(q); setForm({ question_text: q.question_text, option_a: q.option_a, option_b: q.option_b, option_c: q.option_c, option_d: q.option_d, correct_option: q.correct_option, rationale: q.rationale ?? "", marks: q.marks }); setError(""); setShowForm(true); };
+  const openEdit = (q: Question) => { setEditQ(q); setForm({ question_text: q.question_text, option_a: q.option_a, option_b: q.option_b, option_c: q.option_c, option_d: q.option_d ?? "", correct_option: q.correct_option, rationale: q.rationale ?? "", marks: q.marks }); setError(""); setShowForm(true); };
 
   const validate = () => {
     if (!form.question_text.trim()) return "Question text is required.";
-    if (!form.option_a.trim() || !form.option_b.trim() || !form.option_c.trim() || !form.option_d.trim()) return "All four options are required.";
+    if (!form.option_a.trim() || !form.option_b.trim() || !form.option_c.trim()) return "Options A, B, and C are required.";
+    if (form.correct_option === "d" && !form.option_d.trim()) return "Option D is required if it is the correct answer.";
     return "";
   };
 
@@ -61,7 +62,7 @@ const AdminQuestions: React.FC = () => {
       option_a: form.option_a.trim(),
       option_b: form.option_b.trim(),
       option_c: form.option_c.trim(),
-      option_d: form.option_d.trim(),
+      option_d: form.option_d.trim() || null,
       correct_option: form.correct_option,
       rationale: form.rationale?.trim() || null,
       marks: form.marks,
@@ -117,15 +118,19 @@ const AdminQuestions: React.FC = () => {
                   <p className="text-xs text-muted-foreground mb-1">Question {i + 1} · {q.marks} mark{q.marks !== 1 ? "s" : ""}</p>
                   <p className="text-sm text-foreground mb-3">{q.question_text}</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {(["a", "b", "c", "d"] as const).map(opt => (
-                      <div key={opt} className={`flex items-center gap-2 px-2.5 py-1.5 rounded text-xs border ${
-                        q.correct_option === opt ? "border-correct/40 bg-correct-bg text-correct" : "border-border text-muted-foreground"
-                      }`}>
-                        <span className="font-medium uppercase">{opt}.</span>
-                        {q[`option_${opt}` as keyof Question] as string}
-                        {q.correct_option === opt && <span className="ml-auto font-medium">✓</span>}
-                      </div>
-                    ))}
+                    {(["a", "b", "c", "d"] as const).map(opt => {
+                      const optionValue = q[`option_${opt}` as keyof Question] as string | null;
+                      if (opt === "d" && (!optionValue || !optionValue.trim())) return null;
+                      return (
+                        <div key={opt} className={`flex items-center gap-2 px-2.5 py-1.5 rounded text-xs border ${
+                          q.correct_option === opt ? "border-correct/40 bg-correct-bg text-correct" : "border-border text-muted-foreground"
+                        }`}>
+                          <span className="font-medium uppercase">{opt}.</span>
+                          {optionValue}
+                          {q.correct_option === opt && <span className="ml-auto font-medium">✓</span>}
+                        </div>
+                      );
+                    })}
                   </div>
                   {q.rationale && (
                     <p className="text-xs text-muted-foreground mt-2 italic">{q.rationale}</p>
@@ -158,7 +163,7 @@ const AdminQuestions: React.FC = () => {
                 <textarea value={form.question_text} onChange={e => setForm(p => ({ ...p, question_text: e.target.value }))}
                   rows={3} className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground resize-none" />
               </div>
-              {(["a", "b", "c", "d"] as const).map(opt => (
+              {(["a", "b", "c"] as const).map(opt => (
                 <div key={opt}>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Option {opt.toUpperCase()} *</label>
                   <input value={form[`option_${opt}` as keyof typeof form] as string}
@@ -166,6 +171,19 @@ const AdminQuestions: React.FC = () => {
                     className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
                 </div>
               ))}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Option D (optional)</label>
+                <input value={form.option_d}
+                  onChange={e => {
+                    setForm(p => ({ ...p, option_d: e.target.value }));
+                    // If D is cleared and it was the correct answer, reset to 'a'
+                    if (!e.target.value.trim() && form.correct_option === "d") {
+                      setForm(p => ({ ...p, correct_option: "a" }));
+                    }
+                  }}
+                  placeholder="Leave empty for 3-option question"
+                  className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-1.5">Correct Answer *</label>
@@ -174,7 +192,7 @@ const AdminQuestions: React.FC = () => {
                     <option value="a">Option A</option>
                     <option value="b">Option B</option>
                     <option value="c">Option C</option>
-                    <option value="d">Option D</option>
+                    {form.option_d.trim() && <option value="d">Option D</option>}
                   </select>
                 </div>
                 <div>

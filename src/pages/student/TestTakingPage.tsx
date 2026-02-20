@@ -11,7 +11,7 @@ interface Question {
   option_a: string;
   option_b: string;
   option_c: string;
-  option_d: string;
+  option_d: string | null;
   order_index: number;
 }
 
@@ -340,9 +340,17 @@ const TestTakingPage: React.FC = () => {
 
           {/* Options — mockup: A/B/C/D in circle, selected = blue fill */}
           <div className="space-y-3 mb-8">
-            {OPTIONS.map(opt => {
-              const optionText = current[`option_${opt.key}` as keyof Question] as string;
+            {OPTIONS.filter(opt => {
+              // Only show option D if it exists and is not empty
+              if (opt.key === "d") {
+                const optionD = current[`option_${opt.key}` as keyof Question] as string | null;
+                return optionD && optionD.trim().length > 0;
+              }
+              return true;
+            }).map(opt => {
+              const optionText = current[`option_${opt.key}` as keyof Question] as string | null;
               const selected = answers[current.id] === opt.key;
+              if (!optionText) return null;
               return (
                 <button
                   key={opt.key}

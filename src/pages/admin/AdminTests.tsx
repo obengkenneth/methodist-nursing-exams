@@ -210,8 +210,8 @@ const AdminTests: React.FC = () => {
 
       {/* Form modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="rounded-xl border border-border bg-card p-6 max-w-lg w-full shadow-lg">
+        <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="rounded-xl border border-border bg-card p-6 max-w-lg w-full shadow-lg my-auto max-h-[90vh] overflow-y-auto">
             <h3 className="font-heading font-medium text-foreground mb-4">
               {editTest ? "Edit Test" : "Create New Test"}
             </h3>

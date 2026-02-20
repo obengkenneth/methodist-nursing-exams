@@ -21,7 +21,7 @@ interface AnswerDetail {
   option_a: string;
   option_b: string;
   option_c: string;
-  option_d: string;
+  option_d: string | null;
   correct_option: string;
   rationale: string | null;
   selected_option: string | null;
@@ -240,7 +240,9 @@ const AdminResultDetail: React.FC = () => {
                   <div className="px-4 pb-4 border-t border-border pt-4">
                     <div className="space-y-2 mb-4">
                       {(["a", "b", "c", "d"] as const).map(opt => {
-                        const text = ans[`option_${opt}` as keyof AnswerDetail] as string;
+                        const text = ans[`option_${opt}` as keyof AnswerDetail] as string | null;
+                        // Skip option D if it's null or empty
+                        if (opt === "d" && (!text || !text.trim())) return null;
                         const isCorrect = opt === ans.correct_option;
                         const isSelected = opt === ans.selected_option;
                         return (
