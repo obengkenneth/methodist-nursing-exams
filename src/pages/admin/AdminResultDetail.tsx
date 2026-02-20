@@ -121,7 +121,14 @@ const AdminResultDetail: React.FC = () => {
   if (loading) {
     return (
       <SidebarLayout title="Result Details">
-        <div className="text-sm text-muted-foreground">Loading...</div>
+        <nav className="text-sm text-muted-foreground mb-6">
+          <Link to="/admin" className="hover:text-foreground">Admin</Link>
+          <span className="mx-2">/</span>
+          <Link to="/admin/results" className="hover:text-foreground">Student Results</Link>
+          <span className="mx-2">/</span>
+          <span className="text-foreground">Result</span>
+        </nav>
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">Loading...</div>
       </SidebarLayout>
     );
   }
@@ -129,7 +136,14 @@ const AdminResultDetail: React.FC = () => {
   if (!result) {
     return (
       <SidebarLayout title="Result Details">
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">
+        <nav className="text-sm text-muted-foreground mb-6">
+          <Link to="/admin" className="hover:text-foreground">Admin</Link>
+          <span className="mx-2">/</span>
+          <Link to="/admin/results" className="hover:text-foreground">Student Results</Link>
+          <span className="mx-2">/</span>
+          <span className="text-foreground">Result</span>
+        </nav>
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           Result not found.
           <div className="mt-4">
             <Link to="/admin/results" className="text-primary hover:underline">Back to Student Results</Link>
@@ -144,7 +158,14 @@ const AdminResultDetail: React.FC = () => {
 
   return (
     <SidebarLayout title="Result Details">
-      <div className="institution-card p-6 mb-6">
+      <nav className="text-sm text-muted-foreground mb-6">
+        <Link to="/admin" className="hover:text-foreground">Admin</Link>
+        <span className="mx-2">/</span>
+        <Link to="/admin/results" className="hover:text-foreground">Student Results</Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">Result</span>
+      </nav>
+      <div className="rounded-xl border border-border bg-card p-6 mb-6 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <h2 className="font-heading text-lg font-medium text-foreground">{result.test_title}</h2>
@@ -182,12 +203,12 @@ const AdminResultDetail: React.FC = () => {
       </div>
 
       <div>
-        <h3 className="font-heading text-base font-medium text-foreground mb-3">Answer Review</h3>
-        <div className="space-y-3">
+        <h3 className="font-heading text-lg font-semibold text-foreground mb-4">Answer Review</h3>
+        <div className="space-y-4">
           {answers.map((ans, i) => {
             const isOpen = expanded[ans.question_id];
             return (
-              <div key={ans.question_id} className="institution-card overflow-hidden">
+              <div key={ans.question_id} className="question-card-result overflow-hidden">
                 <button
                   onClick={() => setExpanded(p => ({ ...p, [ans.question_id]: !p[ans.question_id] }))}
                   className="w-full flex items-start justify-between p-4 text-left hover:bg-muted/30 transition-colors"

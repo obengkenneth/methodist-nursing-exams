@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { SidebarLayout } from "@/components/SidebarLayout";
 import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,22 +155,30 @@ const AdminStudents: React.FC = () => {
 
   return (
     <SidebarLayout title="Manage Students">
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm text-muted-foreground">{students.length} registered student(s)</p>
-        <button onClick={() => { setShowForm(true); setError(""); setSuccess(""); }} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
+      <nav className="text-sm text-muted-foreground mb-6">
+        <Link to="/admin" className="hover:text-foreground">Admin</Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">Manage Students</span>
+      </nav>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h2 className="font-heading text-xl font-bold text-foreground tracking-tight">Manage Students</h2>
+        <button onClick={() => { setShowForm(true); setError(""); setSuccess(""); }} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm rounded-lg">
           <Plus size={16} />
           Create Student Account
         </button>
       </div>
 
+      <p className="text-sm text-muted-foreground mb-6">{students.length} registered student(s)</p>
+
       {loading ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">Loading...</div>
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">Loading...</div>
       ) : students.length === 0 ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           No students registered. Create a student account to get started.
         </div>
       ) : (
-        <div className="institution-card overflow-hidden overflow-x-auto">
+        <div className="rounded-xl border border-border overflow-hidden bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-x-auto">
           <table className="w-full data-table min-w-[600px]">
             <thead>
               <tr>
@@ -215,7 +224,7 @@ const AdminStudents: React.FC = () => {
 
       {editStudent && (
         <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="institution-card p-6 max-w-md w-full">
+          <div className="rounded-xl border border-border bg-card p-6 max-w-md w-full shadow-lg">
             <h3 className="font-heading font-medium text-foreground mb-4">Edit Student</h3>
             <p className="text-xs text-muted-foreground mb-4">
               Updating name, email, or student ID here only updates the profile record. The student continues to sign in with their current email.
@@ -252,7 +261,7 @@ const AdminStudents: React.FC = () => {
 
       {changePasswordStudent && (
         <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="institution-card p-6 max-w-md w-full">
+          <div className="rounded-xl border border-border bg-card p-6 max-w-md w-full shadow-lg">
             <h3 className="font-heading font-medium text-foreground mb-4">Change password</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Set a new password for <strong>{changePasswordStudent.full_name}</strong> ({changePasswordStudent.email}). They will use it to sign in.
@@ -291,7 +300,7 @@ const AdminStudents: React.FC = () => {
 
       {showForm && (
         <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="institution-card p-6 max-w-md w-full">
+          <div className="rounded-xl border border-border bg-card p-6 max-w-md w-full shadow-lg">
             <h3 className="font-heading font-medium text-foreground mb-4">Create Student Account</h3>
             <p className="text-xs text-muted-foreground mb-4">
               The student will use the email and password you provide to log in.

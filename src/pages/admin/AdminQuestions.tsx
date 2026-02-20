@@ -83,33 +83,35 @@ const AdminQuestions: React.FC = () => {
 
   return (
     <SidebarLayout title="Manage Questions">
-      <div className="mb-5">
-        <Link to="/admin/tests" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors mb-3">
-          <ChevronLeft size={14} />
-          Back to Tests
-        </Link>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-heading text-base font-medium text-foreground">{testTitle}</h2>
-            <p className="text-sm text-muted-foreground">{questions.length} question(s)</p>
-          </div>
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
-            <Plus size={16} />
-            Add Question
-          </button>
+      <nav className="text-sm text-muted-foreground mb-6">
+        <Link to="/admin" className="hover:text-foreground">Admin</Link>
+        <span className="mx-2">/</span>
+        <Link to="/admin/tests" className="hover:text-foreground">Manage Tests</Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">{testTitle || "Questions"}</span>
+      </nav>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="font-heading text-xl font-bold text-foreground tracking-tight">{testTitle || "Questions"}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{questions.length} question(s)</p>
         </div>
+        <button onClick={openCreate} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm rounded-lg">
+          <Plus size={16} />
+          Add Question
+        </button>
       </div>
 
       {loading ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">Loading...</div>
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">Loading...</div>
       ) : questions.length === 0 ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           No questions yet. Click "Add Question" to start building this exam.
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {questions.map((q, i) => (
-            <div key={q.id} className="institution-card p-4">
+            <div key={q.id} className="rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
                   <p className="text-xs text-muted-foreground mb-1">Question {i + 1} · {q.marks} mark{q.marks !== 1 ? "s" : ""}</p>
@@ -145,7 +147,7 @@ const AdminQuestions: React.FC = () => {
 
       {showForm && (
         <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-start justify-center z-50 p-4 overflow-y-auto">
-          <div className="institution-card p-6 max-w-2xl w-full my-8">
+          <div className="rounded-xl border border-border bg-card p-6 max-w-2xl w-full my-8 shadow-lg">
             <h3 className="font-heading font-medium text-foreground mb-4">
               {editQ ? "Edit Question" : "Add New Question"}
             </h3>

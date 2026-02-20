@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,8 +10,10 @@ import {
   Users,
   BookOpen,
   BarChart2,
+  ChevronDown,
   ChevronRight,
   Menu,
+  User,
   X,
 } from "lucide-react";
 
@@ -39,22 +41,33 @@ const SidebarContent: React.FC<{
   nav: typeof studentNav;
   location: ReturnType<typeof useLocation>;
   onNavClick?: () => void;
-}> = ({ nav, location, onNavClick }) => (
+  collapsed?: boolean;
+}> = ({ nav, location, onNavClick, collapsed }) => (
   <>
-    <div className="px-5 py-6 border-b" style={{ borderColor: "hsl(var(--sidebar-border))" }}>
-      <div className="flex items-center gap-3">
-        <img src={mugLogo} alt="MUG" className="h-9 w-auto object-contain max-h-9" onError={(e) => { e.currentTarget.style.display = "none"; }} />
-        <div>
-          <p className="text-xs font-medium leading-tight" style={{ color: "hsl(var(--sidebar-foreground))" }}>
-            Methodist University
-          </p>
-          <p className="text-xs opacity-70" style={{ color: "hsl(var(--sidebar-foreground))" }}>
-            Nursing Portal
-          </p>
-        </div>
+    <div
+      className={`border-b flex-shrink-0 ${collapsed ? "px-0 py-4 justify-center" : "px-5 py-6"}`}
+      style={{ borderColor: "hsl(var(--sidebar-border))" }}
+    >
+      <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
+        <img
+          src={mugLogo}
+          alt="MUG"
+          className={`object-contain ${collapsed ? "h-8 w-8" : "h-9 max-h-9"}`}
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
+        />
+        {!collapsed && (
+          <div>
+            <p className="text-xs font-medium leading-tight" style={{ color: "hsl(var(--sidebar-foreground))" }}>
+              Methodist University
+            </p>
+            <p className="text-xs opacity-70" style={{ color: "hsl(var(--sidebar-foreground))" }}>
+              Nursing Portal
+            </p>
+          </div>
+        )}
       </div>
     </div>
-    <nav className="flex-1 px-3 py-4 space-y-0.5">
+    <nav className={`flex-1 py-4 space-y-0.5 ${collapsed ? "px-2 flex flex-col items-center" : "px-3"}`}>
       {nav.map(item => {
         const Icon = item.icon;
         const active = location.pathname === item.href;
@@ -63,36 +76,63 @@ const SidebarContent: React.FC<{
             key={item.href}
             to={item.href}
             onClick={onNavClick}
-            className={`nav-sidebar-link ${active ? "active" : ""}`}
+            title={collapsed ? item.label : undefined}
+            className={`nav-sidebar-link ${active ? "active" : ""} ${collapsed ? "justify-center p-2.5 w-10 h-10 rounded-lg" : ""}`}
           >
-            <Icon size={16} />
-            {item.label}
-            {active && <ChevronRight size={14} className="ml-auto opacity-60" />}
+            <Icon size={20} />
+            {!collapsed && (
+              <>
+                {item.label}
+                {active && <ChevronRight size={14} className="ml-auto opacity-60" />}
+              </>
+            )}
           </Link>
         );
       })}
     </nav>
-    <div className="px-3 py-4 border-t" style={{ borderColor: "hsl(var(--sidebar-border))" }}>
+    <div
+      className={`border-t flex-shrink-0 ${collapsed ? "px-0 py-3 justify-center" : "px-3 py-4"}`}
+      style={{ borderColor: "hsl(var(--sidebar-border))" }}
+    >
       <a
         href={WONDERTECH_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs opacity-70 hover:opacity-100 transition-opacity flex items-center gap-1 flex-wrap"
+        title="Made with ♥ by wondertechinnovations"
+        className={`opacity-70 hover:opacity-100 transition-opacity flex items-center ${collapsed ? "justify-center text-base" : "gap-1 flex-wrap text-xs"}`}
         style={{ color: "hsl(var(--sidebar-foreground))" }}
       >
-        Made with ♥ by wondertechinnovations
+        {collapsed ? <span className="text-red-500">♥</span> : (
+          <>Made with <span className="text-red-500 opacity-100">♥</span> by wondertechinnovations</>
+        )}
       </a>
     </div>
   </>
 );
+
+const SIDEBAR_COLLAPSED_KEY = "sidebar-collapsed";
 
 export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, title }) => {
   const { role, user, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
+  });
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const [fullName, setFullName] = useState<string | null>(null);
   const nav = role === "admin" ? adminNav : studentNav;
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (!user?.id) {
@@ -107,33 +147,88 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, title })
       .then(({ data }) => setFullName(data?.full_name ?? null));
   }, [user?.id]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    if (userMenuOpen) {
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
+    }
+  }, [userMenuOpen]);
+
   const handleSignOut = async () => {
+    setUserMenuOpen(false);
     await signOut();
     navigate("/login");
   };
 
   const closeSidebar = () => setSidebarOpen(false);
 
+  const displayName = fullName || user?.email || "User";
+  const displayEmail = fullName && user?.email ? user.email : null;
+
   const headerUserBlock = (
-    <div className="flex items-center gap-3 flex-shrink-0">
-      <div className="text-right min-w-0 hidden sm:block">
-        <p className="text-xs font-medium text-foreground truncate max-w-[180px] sm:max-w-xs">
-          {fullName || user?.email}
-        </p>
-        {fullName && user?.email && (
-          <p className="text-xs text-muted-foreground truncate max-w-[180px] sm:max-w-xs">
-            {user.email}
-          </p>
-        )}
-      </div>
+    <div className="relative flex items-center flex-shrink-0" ref={userMenuRef}>
       <button
         type="button"
-        onClick={handleSignOut}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted rounded-md transition-colors"
+        onClick={() => setUserMenuOpen((open) => !open)}
+        className="hidden sm:flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-card border border-primary/25 hover:border-primary/40 transition-colors text-left min-w-0 shadow-sm"
+        aria-expanded={userMenuOpen}
+        aria-haspopup="true"
       >
-        <LogOut size={14} />
-        Sign Out
+        <span className="flex-shrink-0 w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+          <User size={14} />
+        </span>
+        <div className="min-w-0 hidden sm:block">
+          <p className="text-xs font-medium text-foreground truncate max-w-[120px] leading-tight">
+            {displayName}
+          </p>
+          {displayEmail && (
+            <p className="text-[11px] text-muted-foreground truncate max-w-[120px] leading-tight">
+              {displayEmail}
+            </p>
+          )}
+        </div>
+        <ChevronDown size={14} className={`flex-shrink-0 text-muted-foreground transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
       </button>
+
+      {/* Dropdown */}
+      {userMenuOpen && (
+        <div className="absolute right-0 top-full mt-1.5 w-56 rounded-xl border border-border bg-card py-2 shadow-lg z-50">
+          <div className="px-3 py-2.5 border-b border-border">
+            <p className="text-xs font-semibold text-foreground truncate">{displayName}</p>
+            {displayEmail && (
+              <p className="text-[11px] text-muted-foreground truncate mt-0.5">{displayEmail}</p>
+            )}
+          </div>
+          <div className="py-1">
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <LogOut size={14} />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Fallback when no dropdown (e.g. narrow): show sign out only */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <span className="text-xs text-foreground truncate max-w-[100px]">{displayName}</span>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-foreground hover:bg-muted rounded-md"
+        >
+          <LogOut size={14} />
+          Sign Out
+        </button>
+      </div>
     </div>
   );
 
@@ -178,28 +273,38 @@ export const SidebarLayout: React.FC<SidebarLayoutProps> = ({ children, title })
         <SidebarContent nav={nav} location={location} onNavClick={closeSidebar} />
       </aside>
 
-      {/* Desktop: sticky sidebar */}
+      {/* Desktop/tablet: collapsible sidebar (narrow = icons + logo only) */}
       <aside
-        className="hidden md:flex w-56 flex-shrink-0 flex-col sticky top-0 h-screen overflow-y-auto"
+        className={`hidden md:flex flex-shrink-0 flex-col sticky top-0 h-screen overflow-y-auto border-r border-[hsl(var(--sidebar-border))] transition-[width] duration-300 ease-out ${
+          sidebarCollapsed ? "w-16" : "w-56"
+        }`}
         style={{ background: "hsl(var(--sidebar-background))" }}
       >
-        <SidebarContent nav={nav} location={location} />
+        <SidebarContent nav={nav} location={location} collapsed={sidebarCollapsed} />
       </aside>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 pt-12 md:pt-0">
-        {/* Desktop: sticky header with title + user + logout */}
-        <header className="hidden md:flex sticky top-0 z-10 page-header items-center justify-between bg-card">
-          <div>
+        {/* Desktop: sticky header with menu + title + user */}
+        <header className="hidden md:flex sticky top-0 z-10 page-header items-center justify-between gap-4 bg-card">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={toggleSidebarCollapsed}
+              className="p-2 rounded-lg text-foreground hover:bg-muted transition-colors flex-shrink-0"
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <Menu size={20} />
+            </button>
             {title && (
-              <h1 className="font-heading text-lg font-medium text-foreground">{title}</h1>
+              <h1 className="font-heading text-lg font-medium text-foreground truncate">{title}</h1>
             )}
           </div>
           {headerUserBlock}
         </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto">
+        {/* Page content - white for clean look */}
+        <main className="flex-1 p-4 md:p-6 overflow-y-auto bg-card">
           {children}
         </main>
       </div>

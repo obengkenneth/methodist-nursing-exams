@@ -49,15 +49,15 @@
     --shadow-card-hover: 0 4px 12px rgba(30, 77, 183, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
     --shadow-btn-primary: 0 2px 6px rgba(30, 77, 183, 0.25);
 
-    /* Sidebar - deeper dark */
-    --sidebar-background: 220 55% 22%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 220 71% 30%;
-    --sidebar-accent: 220 50% 28%;
+    /* Sidebar - light, clean (reference) */
+    --sidebar-background: 220 14% 96%;
+    --sidebar-foreground: 220 20% 20%;
+    --sidebar-primary: 220 71% 40%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 71% 40%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 220 50% 18%;
-    --sidebar-ring: 0 0% 80%;
+    --sidebar-border: 220 12% 90%;
+    --sidebar-ring: 220 71% 40%;
 
     /* Typography */
     --font-heading: 'Libre Franklin', sans-serif;
@@ -159,54 +159,48 @@
 
   .page-header {
     @apply border-b border-border bg-card px-6 py-4;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 1px 0 0 hsl(var(--border) / 0.5);
   }
 
   .status-badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium;
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
   }
 
   .status-pass {
-    background: hsl(var(--correct-bg));
-    color: hsl(var(--correct));
+    background: hsl(var(--correct));
+    color: white;
   }
 
   .status-fail {
-    background: hsl(var(--incorrect-bg));
-    color: hsl(var(--incorrect));
+    background: hsl(var(--incorrect));
+    color: white;
   }
 
   .nav-sidebar-link {
-    @apply flex items-center gap-3 px-4 py-2.5 text-sm rounded transition-all duration-200 ease-out;
-    color: hsl(var(--sidebar-foreground) / 0.8);
+    @apply flex items-center gap-3 px-4 py-2.5 text-sm rounded-lg transition-all duration-200 ease-out;
+    color: hsl(var(--sidebar-foreground));
   }
 
   .nav-sidebar-link:hover {
-    background: hsl(var(--sidebar-accent));
+    background: hsl(var(--sidebar-foreground) / 0.06);
     color: hsl(var(--sidebar-foreground));
   }
 
   .nav-sidebar-link.active {
     background: hsl(var(--sidebar-accent));
-    color: hsl(var(--sidebar-foreground));
+    color: hsl(var(--sidebar-accent-foreground));
     font-weight: 500;
-    border-left: 3px solid hsl(var(--sidebar-foreground));
-    margin-left: 0;
-    padding-left: calc(1rem - 3px);
   }
 
   .data-table th {
-    @apply text-xs font-semibold uppercase tracking-wide;
+    @apply text-xs font-semibold uppercase tracking-wider;
     color: hsl(var(--muted-foreground));
-    background: hsl(var(--muted));
+    background: hsl(220 14% 98%);
   }
 
   .data-table th, .data-table td {
-    @apply px-4 py-3 text-sm border-b border-border;
-  }
-
-  .data-table tr:last-child td {
-    @apply border-b-0;
+    @apply px-5 py-3.5 text-sm border-b;
+    border-color: hsl(var(--border) / 0.8);
   }
 
   .data-table tbody tr {
@@ -214,7 +208,7 @@
   }
 
   .data-table tbody tr:hover {
-    background: hsl(var(--primary) / 0.04);
+    background: hsl(var(--primary) / 0.03);
   }
 
   .btn-primary {
@@ -248,5 +242,74 @@
     background-color: hsl(var(--background));
     background-image: radial-gradient(hsl(var(--primary) / 0.04) 1px, transparent 1px);
     background-size: 28px 28px;
+  }
+
+  /* Mockup-style exam cards (student dashboard) */
+  .exam-card {
+    @apply rounded-xl overflow-hidden bg-card border border-border transition-all duration-200;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+  .exam-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+  .exam-card__image {
+    @apply h-24 w-full flex-shrink-0;
+    background: linear-gradient(135deg, hsl(200 50% 92%) 0%, hsl(200 40% 96%) 100%);
+  }
+  .exam-card__tag {
+    @apply absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wide text-primary-foreground;
+    background: hsl(var(--primary));
+  }
+  .exam-card__tag.elective {
+    background: hsl(200 70% 42%);
+  }
+
+  /* Result page: circular progress (green when passed, red when failed) */
+  .result-circle {
+    @apply relative rounded-full flex items-center justify-center;
+    background: conic-gradient(var(--circle-color) calc(var(--pct) * 3.6deg), hsl(var(--muted)) 0deg);
+  }
+  .result-circle__inner {
+    @apply absolute rounded-full bg-card flex flex-col items-center justify-center;
+  }
+
+  /* Result page: tab bar */
+  .result-tabs {
+    @apply inline-flex rounded-lg bg-muted p-1 gap-0.5;
+  }
+  .result-tab {
+    @apply px-4 py-2 rounded-md text-sm font-medium transition-colors;
+  }
+  .result-tab.active {
+    @apply text-primary-foreground;
+    background: hsl(var(--primary));
+    box-shadow: 0 1px 3px rgba(30, 77, 183, 0.2);
+  }
+  .result-tab:not(.active) {
+    @apply text-muted-foreground hover:text-foreground hover:bg-muted/80;
+  }
+
+  /* Question card on results: label and points */
+  .question-card-result {
+    @apply rounded-xl overflow-hidden border border-border bg-card;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  .rationale-heading {
+    @apply text-sm font-semibold uppercase tracking-wide mb-2;
+    color: hsl(var(--primary));
+  }
+
+  /* Admin status badges (mockup: ACTIVE blue, DRAFT gray, COMPLETED dark) */
+  .status-active {
+    @apply px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wide text-white;
+    background: hsl(var(--correct));
+  }
+  .status-draft {
+    @apply px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wide text-muted-foreground bg-muted;
+  }
+  .status-completed {
+    @apply px-2.5 py-1 rounded text-xs font-semibold uppercase tracking-wide text-white;
+    background: hsl(220 15% 35%);
   }
 }

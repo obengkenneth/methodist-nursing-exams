@@ -17,6 +17,7 @@ export type Database = {
       answers: {
         Row: {
           created_at: string
+          flagged: boolean
           id: string
           is_correct: boolean
           question_id: string
@@ -25,6 +26,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          flagged?: boolean
           id?: string
           is_correct?: boolean
           question_id: string
@@ -33,6 +35,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          flagged?: boolean
           id?: string
           is_correct?: boolean
           question_id?: string
@@ -151,6 +154,7 @@ export type Database = {
           student_id: string
           submitted_at: string
           test_id: string
+          time_spent_seconds: number | null
           total_marks: number
         }
         Insert: {
@@ -161,6 +165,7 @@ export type Database = {
           student_id: string
           submitted_at?: string
           test_id: string
+          time_spent_seconds?: number | null
           total_marks?: number
         }
         Update: {
@@ -171,6 +176,7 @@ export type Database = {
           student_id?: string
           submitted_at?: string
           test_id?: string
+          time_spent_seconds?: number | null
           total_marks?: number
         }
         Relationships: [
@@ -188,10 +194,14 @@ export type Database = {
           allow_retake: boolean
           created_at: string
           created_by: string | null
+          department: string | null
           description: string | null
           duration_minutes: number
           id: string
+          image_url: string | null
           is_active: boolean
+          passing_percentage: number
+          status: Database["public"]["Enums"]["test_status"]
           title: string
           updated_at: string
         }
@@ -199,10 +209,14 @@ export type Database = {
           allow_retake?: boolean
           created_at?: string
           created_by?: string | null
+          department?: string | null
           description?: string | null
           duration_minutes?: number
           id?: string
+          image_url?: string | null
           is_active?: boolean
+          passing_percentage?: number
+          status?: Database["public"]["Enums"]["test_status"]
           title: string
           updated_at?: string
         }
@@ -210,10 +224,14 @@ export type Database = {
           allow_retake?: boolean
           created_at?: string
           created_by?: string | null
+          department?: string | null
           description?: string | null
           duration_minutes?: number
           id?: string
+          image_url?: string | null
           is_active?: boolean
+          passing_percentage?: number
+          status?: Database["public"]["Enums"]["test_status"]
           title?: string
           updated_at?: string
         }
@@ -256,6 +274,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "student"
+      test_status: "draft" | "active" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never

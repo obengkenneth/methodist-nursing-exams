@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { SidebarLayout } from "@/components/SidebarLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Pencil, Trash2, Eye, ToggleLeft, ToggleRight } from "lucide-react";
+import { Plus, Pencil, Trash2, Eye, Search } from "lucide-react";
+
+type TestStatus = "draft" | "active" | "completed";
 
 interface Test {
   id: string;
@@ -11,6 +13,8 @@ interface Test {
   description: string | null;
   duration_minutes: number;
   is_active: boolean;
+  status?: TestStatus;
+  department: string | null;
   allow_retake: boolean;
   passing_percentage?: number;
   created_at: string;
@@ -23,17 +27,18 @@ const AdminTests: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editTest, setEditTest] = useState<Test | null>(null);
-  const [form, setForm] = useState({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50 });
+  const [form, setForm] = useState({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50, status: "active" as TestStatus, department: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [search, setSearch] = useState("");
 
   const loadTests = async () => {
-    const { data } = await supabase.from("tests").select("id, title, description, duration_minutes, is_active, allow_retake, passing_percentage, created_at").order("created_at", { ascending: false });
+    const { data } = await supabase.from("tests").select("id, title, description, duration_minutes, is_active, status, department, allow_retake, passing_percentage, created_at").order("created_at", { ascending: false });
     const tests = data ?? [];
 
     const withCounts = await Promise.all(tests.map(async t => {
       const { count } = await supabase.from("questions").select("id", { count: "exact", head: true }).eq("test_id", t.id);
-      return { ...t, question_count: count ?? 0 };
+      return { ...t, question_count: count ?? 0, status: (t as { status?: TestStatus }).status ?? "active", department: (t as { department?: string | null }).department ?? null };
     }));
     setTests(withCounts);
     setLoading(false);
@@ -41,16 +46,37 @@ const AdminTests: React.FC = () => {
 
   useEffect(() => { loadTests(); }, []);
 
+  const filteredTests = useMemo(() => {
+    if (!search.trim()) return tests;
+    const q = search.trim().toLowerCase();
+    return tests.filter(t => t.title.toLowerCase().includes(q));
+  }, [tests, search]);
+
+  const counts = useMemo(() => ({
+    active: tests.filter(t => (t.status ?? "active") === "active").length,
+    draft: tests.filter(t => (t.status ?? "active") === "draft").length,
+    completed: tests.filter(t => (t.status ?? "active") === "completed").length,
+  }), [tests]);
+
   const openCreate = () => {
     setEditTest(null);
-    setForm({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50 });
+    setForm({ title: "", description: "", duration_minutes: 60, is_active: true, allow_retake: false, passing_percentage: 50, status: "active", department: "" });
     setError("");
     setShowForm(true);
   };
 
   const openEdit = (t: Test) => {
     setEditTest(t);
-    setForm({ title: t.title, description: t.description ?? "", duration_minutes: t.duration_minutes, is_active: t.is_active, allow_retake: t.allow_retake, passing_percentage: t.passing_percentage ?? 50 });
+    setForm({
+      title: t.title,
+      description: t.description ?? "",
+      duration_minutes: t.duration_minutes,
+      is_active: t.is_active,
+      allow_retake: t.allow_retake,
+      passing_percentage: t.passing_percentage ?? 50,
+      status: (t.status ?? "active") as TestStatus,
+      department: t.department ?? "",
+    });
     setError("");
     setShowForm(true);
   };
@@ -59,10 +85,20 @@ const AdminTests: React.FC = () => {
     if (!form.title.trim()) { setError("Title is required."); return; }
     setSaving(true);
     setError("");
+    const payload = {
+      title: form.title.trim(),
+      description: form.description || null,
+      duration_minutes: form.duration_minutes,
+      is_active: form.is_active,
+      allow_retake: form.allow_retake,
+      passing_percentage: form.passing_percentage,
+      status: form.status,
+      department: form.department.trim() || null,
+    };
     if (editTest) {
-      await supabase.from("tests").update({ title: form.title.trim(), description: form.description || null, duration_minutes: form.duration_minutes, is_active: form.is_active, allow_retake: form.allow_retake, passing_percentage: form.passing_percentage }).eq("id", editTest.id);
+      await supabase.from("tests").update(payload).eq("id", editTest.id);
     } else {
-      await supabase.from("tests").insert({ title: form.title.trim(), description: form.description || null, duration_minutes: form.duration_minutes, is_active: form.is_active, allow_retake: form.allow_retake, passing_percentage: form.passing_percentage, created_by: user?.id });
+      await supabase.from("tests").insert({ ...payload, created_by: user?.id });
     }
     setSaving(false);
     setShowForm(false);
@@ -75,75 +111,98 @@ const AdminTests: React.FC = () => {
     loadTests();
   };
 
-  const toggleActive = async (t: Test) => {
-    await supabase.from("tests").update({ is_active: !t.is_active }).eq("id", t.id);
-    loadTests();
-  };
-
   return (
     <SidebarLayout title="Manage Tests">
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm text-muted-foreground">{tests.length} test(s) total</p>
-        <button onClick={openCreate} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm">
-          <Plus size={16} />
-          Create Test
-        </button>
+      <nav className="text-sm text-muted-foreground mb-6">
+        <Link to="/admin" className="hover:text-foreground">Admin</Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">Manage Tests</span>
+      </nav>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h2 className="font-heading text-xl font-bold text-foreground tracking-tight">Manage Tests</h2>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              placeholder="Search examinations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-3 py-2 text-sm border border-input rounded-lg bg-card text-foreground w-48 sm:w-56 input-focus"
+            />
+          </div>
+          <button onClick={openCreate} className="btn-primary flex items-center gap-2 px-4 py-2 text-sm rounded-lg">
+            <Plus size={16} />
+            Create New Test
+          </button>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="status-active">{counts.active} Active</span>
+            <span className="status-draft">{counts.draft} Drafts</span>
+            <span className="status-completed">{counts.completed} Completed</span>
+          </div>
+        </div>
       </div>
 
       {loading ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">Loading...</div>
-      ) : tests.length === 0 ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">
-          No tests created yet. Click "Create Test" to get started.
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">Loading...</div>
+      ) : filteredTests.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+          {search.trim() ? "No tests match your search." : "No tests created yet. Click \"Create New Test\" to get started."}
         </div>
       ) : (
-        <div className="institution-card overflow-hidden overflow-x-auto">
+        <div className="rounded-xl border border-border overflow-hidden bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-x-auto">
           <table className="w-full data-table min-w-[640px]">
             <thead>
               <tr>
-                <th className="text-left">Title</th>
-                <th className="text-left">Duration</th>
-                <th className="text-left">Questions</th>
-                <th className="text-left">Status</th>
-                <th className="text-left">Created</th>
-                <th className="text-left">Actions</th>
+                <th className="text-left">TITLE</th>
+                <th className="text-left">DEPARTMENT</th>
+                <th className="text-left">DATE</th>
+                <th className="text-left">STATUS</th>
+                <th className="text-left">ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              {tests.map(t => (
-                <tr key={t.id}>
-                  <td>
-                    <p className="text-sm font-medium text-foreground">{t.title}</p>
-                    {t.description && <p className="text-xs text-muted-foreground">{t.description}</p>}
-                  </td>
-                  <td className="text-sm text-muted-foreground">{t.duration_minutes} min</td>
-                  <td className="text-sm text-foreground">{t.question_count}</td>
-                  <td>
-                    <span className={`status-badge ${t.is_active ? "status-pass" : "status-fail"}`}>
-                      {t.is_active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="text-sm text-muted-foreground">
-                    {new Date(t.created_at).toLocaleDateString()}
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <Link to={`/admin/tests/${t.id}/questions`} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="Manage Questions">
-                        <Eye size={15} />
-                      </Link>
-                      <button onClick={() => openEdit(t)} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="Edit">
-                        <Pencil size={15} />
-                      </button>
-                      <button onClick={() => toggleActive(t)} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="Toggle active">
-                        {t.is_active ? <ToggleRight size={15} className="text-correct" /> : <ToggleLeft size={15} />}
-                      </button>
-                      <button onClick={() => handleDelete(t.id)} className="p-1.5 text-muted-foreground hover:text-incorrect transition-colors" title="Delete">
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filteredTests.map(t => {
+                const status = (t.status ?? "active") as TestStatus;
+                return (
+                  <tr key={t.id}>
+                    <td>
+                      <p className="text-sm font-medium text-foreground">{t.title}</p>
+                      <p className="text-xs text-muted-foreground">ID: {t.id.slice(0, 8)}</p>
+                    </td>
+                    <td className="text-sm text-muted-foreground">{t.department ?? "—"}</td>
+                    <td className="text-sm text-muted-foreground">
+                      {new Date(t.created_at).toLocaleDateString()}
+                    </td>
+                    <td>
+                      <span className={
+                        status === "active" ? "status-active" :
+                        status === "draft" ? "status-draft" :
+                        "status-completed"
+                      }>
+                        {status === "active" ? "ACTIVE" : status === "draft" ? "DRAFT" : "COMPLETED"}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2">
+                        <Link to={`/admin/tests/${t.id}/questions`} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="Manage Questions">
+                          <Eye size={15} />
+                        </Link>
+                        <button onClick={() => openEdit(t)} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="Edit">
+                          <Pencil size={15} />
+                        </button>
+                        <Link to={`/admin/results?testId=${t.id}`} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="View Results">
+                          View Results
+                        </Link>
+                        <button onClick={() => handleDelete(t.id)} className="p-1.5 text-muted-foreground hover:text-incorrect transition-colors" title="Delete">
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -152,7 +211,7 @@ const AdminTests: React.FC = () => {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="institution-card p-6 max-w-lg w-full">
+          <div className="rounded-xl border border-border bg-card p-6 max-w-lg w-full shadow-lg">
             <h3 className="font-heading font-medium text-foreground mb-4">
               {editTest ? "Edit Test" : "Create New Test"}
             </h3>
@@ -167,6 +226,22 @@ const AdminTests: React.FC = () => {
                 <label className="block text-sm font-medium text-foreground mb-1.5">Description</label>
                 <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
                   rows={2} className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground resize-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Department</label>
+                <input value={form.department} onChange={e => setForm(p => ({ ...p, department: e.target.value }))}
+                  placeholder="e.g. Clinical Nursing"
+                  className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1.5">Status</label>
+                <select value={form.status} onChange={e => setForm(p => ({ ...p, status: e.target.value as TestStatus }))}
+                  className="input-focus w-full px-3 py-2 text-sm border border-input rounded-md bg-card text-foreground">
+                  <option value="draft">Draft</option>
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">Only Active tests are visible to students.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Duration (minutes)</label>

@@ -64,24 +64,32 @@ const AdminResults: React.FC = () => {
 
   return (
     <SidebarLayout title="Student Results">
-      <div className="flex items-center justify-between mb-5">
-        <p className="text-sm text-muted-foreground">{results.length} submission(s)</p>
+      <nav className="text-sm text-muted-foreground mb-6">
+        <Link to="/admin" className="hover:text-foreground">Admin</Link>
+        <span className="mx-2">/</span>
+        <span className="text-foreground">Student Results</span>
+      </nav>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h2 className="font-heading text-xl font-bold text-foreground tracking-tight">Student Results</h2>
         <input
           value={filter}
           onChange={e => setFilter(e.target.value)}
           placeholder="Search by student or test..."
-          className="px-3 py-2 text-sm border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary w-64"
+          className="px-3 py-2 text-sm border border-input rounded-lg bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 w-64"
         />
       </div>
 
+      <p className="text-sm text-muted-foreground mb-6">{results.length} submission(s)</p>
+
       {loading ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">Loading...</div>
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">Loading...</div>
       ) : filtered.length === 0 ? (
-        <div className="institution-card p-8 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
           {results.length === 0 ? "No results submitted yet." : "No results match your search."}
         </div>
       ) : (
-        <div className="institution-card overflow-hidden overflow-x-auto">
+        <div className="rounded-xl border border-border overflow-hidden bg-card shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-x-auto">
           <table className="w-full data-table min-w-[600px]">
             <thead>
               <tr>

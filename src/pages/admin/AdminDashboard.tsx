@@ -19,6 +19,9 @@ const AdminDashboard: React.FC = () => {
     load();
   }, []);
 
+  const today = new Date();
+  const sessionLabel = today.getMonth() >= 8 ? `Fall ${today.getFullYear()}` : today.getMonth() >= 0 ? `Spring ${today.getFullYear()}` : `Fall ${today.getFullYear() - 1}`;
+
   const cards = [
     { label: "Total Tests", value: stats.tests, icon: ClipboardList },
     { label: "Registered Students", value: stats.students, icon: Users },
@@ -28,39 +31,50 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <SidebarLayout title="Admin Overview">
-      <div className="mb-6">
-        <h2 className="font-heading text-xl font-medium text-foreground">Administration</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-border/80">
+        {/* <p className="text-sm text-muted-foreground">
+          Academic Session: <span className="font-medium text-foreground">{sessionLabel}</span>
+        </p> */}
+        <p className="text-sm text-muted-foreground">
+          Today is {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+        </p>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="font-heading text-2xl font-bold text-foreground tracking-tight">
+          Administration
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1.5">
           Manage tests, students, and view results.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
         {cards.map((c, i) => {
           const Icon = c.icon;
           return (
             <div
               key={c.label}
-              className="institution-card card-hover border-l border-primary p-4 stat-card-stagger"
+              className="rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)] stat-card-stagger"
               style={{ animationDelay: `${i * 60}ms` }}
             >
-              <div className="stat-card-icon mb-3">
-                <Icon size={18} />
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-3 bg-primary/10 text-primary">
+                <Icon size={22} />
               </div>
-              <p className="font-heading text-2xl font-medium text-foreground">{c.value}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{c.label}</p>
+              <p className="font-heading text-2xl font-bold text-foreground">{c.value}</p>
+              <p className="text-sm text-muted-foreground mt-0.5">{c.label}</p>
             </div>
           );
         })}
       </div>
 
-      <div className="institution-card p-5">
-        <p className="text-sm font-medium text-foreground mb-1">Quick Actions</p>
-        <p className="text-xs text-muted-foreground mb-4">Use the sidebar navigation to manage the portal.</p>
-        <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-          <li>Go to <strong>Manage Tests</strong> to create or edit exams and questions.</li>
-          <li>Go to <strong>Manage Students</strong> to create student accounts.</li>
-          <li>Go to <strong>Student Results</strong> to review exam performance.</li>
+      <div className="rounded-xl border border-border bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
+        <p className="text-sm font-semibold text-foreground mb-1">Quick Actions</p>
+        <p className="text-sm text-muted-foreground mb-4">Use the sidebar navigation to manage the portal.</p>
+        <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside">
+          <li>Go to <strong className="text-foreground">Manage Tests</strong> to create or edit exams and questions.</li>
+          <li>Go to <strong className="text-foreground">Manage Students</strong> to create student accounts.</li>
+          <li>Go to <strong className="text-foreground">Student Results</strong> to review exam performance.</li>
         </ul>
       </div>
     </SidebarLayout>

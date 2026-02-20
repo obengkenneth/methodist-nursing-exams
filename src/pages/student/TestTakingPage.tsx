@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import mugLogo from "@/assets/mug-logo.png";
-import { Clock, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import { Clock, ChevronLeft, ChevronRight, AlertTriangle, Flag } from "lucide-react";
 
 interface Question {
   id: string;
@@ -44,6 +44,7 @@ const TestTakingPage: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [alreadyTaken, setAlreadyTaken] = useState(false);
+  const [flaggedIds, setFlaggedIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     if (!testId || !user) return;
@@ -85,6 +86,8 @@ const TestTakingPage: React.FC = () => {
     let score = 0;
     const totalMarks = correctData.reduce((s, q) => s + q.marks, 0);
 
+    const timeSpentSeconds = test.duration_minutes * 60 - timeLeft;
+
     const answerRows = correctData.map(q => {
       const selected = answers[q.id] ?? null;
       const isCorrect = selected === q.correct_option;
@@ -93,6 +96,7 @@ const TestTakingPage: React.FC = () => {
         question_id: q.id,
         selected_option: selected,
         is_correct: isCorrect,
+        flagged: flaggedIds.has(q.id),
       };
     });
 
@@ -119,6 +123,7 @@ const TestTakingPage: React.FC = () => {
           percentage: roundedPct,
           passed,
           submitted_at: new Date().toISOString(),
+          time_spent_seconds: timeSpentSeconds,
         })
         .eq("id", existingResult.id);
       await supabase.from("answers").insert(
@@ -135,6 +140,7 @@ const TestTakingPage: React.FC = () => {
           total_marks: totalMarks,
           percentage: roundedPct,
           passed,
+          time_spent_seconds: timeSpentSeconds,
         })
         .select()
         .single();
@@ -149,7 +155,7 @@ const TestTakingPage: React.FC = () => {
     }
 
     navigate(`/dashboard/results/${test.id}`);
-  }, [test, user, submitting, answers, navigate]);
+  }, [test, user, submitting, answers, navigate, timeLeft, flaggedIds]);
 
   useEffect(() => {
     if (timeLeft <= 0 || submitting) return;
@@ -212,24 +218,48 @@ const TestTakingPage: React.FC = () => {
   const isLast = currentIndex === questions.length - 1;
   const timeWarning = timeLeft < 300;
 
+  const toggleFlag = () => {
+    if (!current) return;
+    setFlaggedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(current.id)) next.delete(current.id);
+      else next.add(current.id);
+      return next;
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Exam header */}
-      <header className="bg-card border-b border-border px-6 py-3 flex items-center justify-between">
+      {/* Exam header — sticky with blue line */}
+      <header className="sticky top-0 z-20 bg-card border-b-2 border-primary px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <img src={mugLogo} alt="MUG" className="h-8 object-contain" />
-          <div>
+          <div className="hidden md:block">
             <p className="font-heading font-medium text-sm text-foreground">{test.title}</p>
             <p className="text-xs text-muted-foreground">School of Nursing and Midwifery</p>
           </div>
         </div>
-        <div className={`flex items-center gap-2 px-4 py-2 rounded border font-mono text-sm font-medium ${
-          timeWarning
-            ? "bg-incorrect-bg border-incorrect/40 text-incorrect"
-            : "bg-muted border-border text-foreground"
-        }`}>
-          <Clock size={14} />
-          {formatTime(timeLeft)}
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 px-4 py-2 rounded border font-mono text-sm font-medium ${
+            timeWarning
+              ? "bg-incorrect-bg border-incorrect/40 text-incorrect"
+              : "bg-muted border-border text-foreground"
+          }`}>
+            <Clock size={14} />
+            {formatTime(timeLeft)}
+          </div>
+          <button
+            type="button"
+            onClick={toggleFlag}
+            className={`p-2 rounded border transition-colors ${
+              current && flaggedIds.has(current.id)
+                ? "bg-primary/10 border-primary text-primary"
+                : "border-border text-muted-foreground hover:bg-muted"
+            }`}
+            title={current && flaggedIds.has(current.id) ? "Unflag question" : "Flag question"}
+          >
+            <Flag size={18} />
+          </button>
         </div>
       </header>
 
@@ -257,7 +287,7 @@ const TestTakingPage: React.FC = () => {
           </div>
 
           {/* Question navigator — mobile: fixed-height horizontal scroll (doesn't grow with question count) */}
-          <div className="lg:hidden mb-6">
+          <div id="question-navigator" className="lg:hidden mb-6">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
               Question Navigator
             </p>
@@ -288,18 +318,23 @@ const TestTakingPage: React.FC = () => {
             </p>
           </div>
 
-          {/* Question */}
-          <div className="institution-card p-6 mb-6">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
-              Question {currentIndex + 1}
-            </p>
-            <p className="text-foreground leading-relaxed" style={{ fontSize: "17px" }}>
-              {current.question_text}
-            </p>
+          {/* Question card — mockup style: white card, label badge, ID */}
+          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden mb-6">
+            <div className="p-6">
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold border border-primary/40 text-primary bg-primary/5">
+                  Question {currentIndex + 1}
+                </span>
+                {/* <span className="text-xs text-muted-foreground font-mono">ID: {current.id.slice(0, 8)}</span> */}
+              </div>
+              <p className="text-foreground leading-relaxed text-[17px] font-medium">
+                {current.question_text}
+              </p>
+            </div>
           </div>
 
-          {/* Options */}
-          <div className="space-y-2.5 mb-8">
+          {/* Options — mockup: A/B/C/D in circle, selected = blue fill */}
+          <div className="space-y-3 mb-8">
             {OPTIONS.map(opt => {
               const optionText = current[`option_${opt.key}` as keyof Question] as string;
               const selected = answers[current.id] === opt.key;
@@ -307,16 +342,20 @@ const TestTakingPage: React.FC = () => {
                 <button
                   key={opt.key}
                   onClick={() => setAnswers(prev => ({ ...prev, [current.id]: opt.key }))}
-                  className={`exam-option w-full text-left ${selected ? "selected" : ""}`}
-                >
-                  <span className={`flex-shrink-0 w-7 h-7 rounded border flex items-center justify-center text-sm font-medium transition-colors ${
+                  className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all ${
                     selected
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "border-border text-muted-foreground bg-muted"
+                      ? "border-primary bg-primary/10 shadow-md"
+                      : "border-border bg-card hover:border-primary/50 hover:bg-muted/50"
+                  }`}
+                >
+                  <span className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-base font-bold transition-colors ${
+                    selected
+                      ? "bg-primary text-primary-foreground"
+                      : "border-2 border-border text-muted-foreground bg-muted"
                   }`}>
                     {opt.label}
                   </span>
-                  <span className="text-sm text-foreground">{optionText}</span>
+                  <span className={`text-base ${selected ? "font-medium text-foreground" : "text-foreground"}`}>{optionText}</span>
                 </button>
               );
             })}
@@ -332,7 +371,6 @@ const TestTakingPage: React.FC = () => {
               <ChevronLeft size={16} />
               Previous
             </button>
-
             {isLast ? (
               <button
                 onClick={() => setShowSubmitConfirm(true)}
@@ -397,6 +435,20 @@ const TestTakingPage: React.FC = () => {
           </button>
         </aside>
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-card px-6 py-4 mt-auto">
+        <div className="flex flex-wrap items-center justify-between gap-4 max-w-4xl mx-auto">
+          <p className="text-xs text-muted-foreground">
+            © {new Date().getFullYear()} Methodist University Ghana • Student Examination Portal
+          </p>
+          <div className="flex gap-4 text-xs text-muted-foreground">
+            <a href="#guidelines" className="hover:text-foreground transition-colors">Exam Guidelines</a>
+            <a href="#support" className="hover:text-foreground transition-colors">Technical Support</a>
+            <a href="#privacy" className="hover:text-foreground transition-colors">Privacy Policy</a>
+          </div>
+        </div>
+      </footer>
 
       {/* Submit confirmation dialog */}
       {showSubmitConfirm && (
