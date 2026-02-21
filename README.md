@@ -150,6 +150,8 @@ After that, you can create students and tests from the admin dashboard. To restr
 
 **Create-student Edge Function (required for creating students):** When an admin creates a student, the app calls the `create-student` Edge Function so your session stays the admin. Deploy it with: `supabase functions deploy create-student`. The function uses `SUPABASE_SERVICE_ROLE_KEY` (set automatically in Supabase) to create the auth user and insert profile and role. If the function is not deployed or returns an error, the form shows the error and you remain logged in.
 
+**Delete-student Edge Function (required for deleting students):** When an admin deletes a student from Manage Students, the app calls the `delete-student` Edge Function to remove the auth user (and thus profile, role, and results via cascade). Deploy with: `supabase functions deploy delete-student`.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.

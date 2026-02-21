@@ -4,3 +4,6 @@ project_id = "zfgcwkyihnmrtpzqctoe"
 # The function validates the JWT and admin role itself (required for new JWT signing keys / ES256).
 [functions.update-student-password]
 verify_jwt = false
+
+[functions.delete-student]
+verify_jwt = false

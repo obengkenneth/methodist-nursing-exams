@@ -5,8 +5,9 @@ import { PasswordInput } from "@/components/ui/password-input";
 import mugLogo from "@/assets/mug-logo.png";
 
 /**
- * Admin Setup Page — used ONLY to create the first administrator account.
- * After setup, this page can be disabled by the developer.
+ * Admin Setup Page — create administrator accounts.
+ * Anyone with the setup key can create an admin account (first or additional).
+ * Restrict or remove the /setup route when you no longer want new admins created here.
  */
 const SetupPage: React.FC = () => {
   const navigate = useNavigate();
@@ -56,9 +57,9 @@ const SetupPage: React.FC = () => {
       return;
     }
 
-    setSuccess("Admin account created. You can now log in.");
+    setSuccess("Admin account created. You can log in with this account or create another admin below.");
     setSaving(false);
-    setTimeout(() => navigate("/login"), 2000);
+    setForm((p) => ({ ...p, full_name: "", email: "", password: "" }));
   };
 
   return (
@@ -73,12 +74,33 @@ const SetupPage: React.FC = () => {
           <div className="text-center mb-8">
             <img src={mugLogo} alt="MUG" className="h-16 mx-auto mb-4 object-contain" />
             <h1 className="font-heading text-xl font-medium text-foreground">Administrator Setup</h1>
-            <p className="text-sm text-muted-foreground mt-1">Create  administrator account</p>
+            <p className="text-sm text-muted-foreground mt-1">Create an administrator account</p>
           </div>
           <div className="institution-card card-elevated rounded-[10px] border-t-4 border-primary p-8">
             
             {error && <p className="text-sm text-incorrect mb-4">{error}</p>}
-            {success && <p className="text-sm text-correct mb-4">{success}</p>}
+            {success && (
+              <div className="mb-4 flex flex-col gap-2">
+                <p className="text-sm text-correct">{success}</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setSuccess(""); setForm((p) => ({ ...p, full_name: "", email: "", password: "" })); }}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Create another admin
+                  </button>
+                  <span className="text-muted-foreground">|</span>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="text-sm font-medium text-primary hover:underline"
+                  >
+                    Go to Sign in
+                  </button>
+                </div>
+              </div>
+            )}
             <form onSubmit={handleSetup} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-foreground mb-1.5">Setup Key *</label>

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { SidebarLayout } from "@/components/SidebarLayout";
 import { PasswordInput } from "@/components/ui/password-input";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, UserCheck, UserX, Pencil, Key } from "lucide-react";
+import { Plus, UserCheck, UserX, Pencil, Key, Trash2 } from "lucide-react";
 
 interface StudentProfile {
   id: string;
@@ -24,6 +24,7 @@ const AdminStudents: React.FC = () => {
   const [editForm, setEditForm] = useState({ full_name: "", email: "", student_id: "" });
   const [changePasswordStudent, setChangePasswordStudent] = useState<StudentProfile | null>(null);
   const [passwordForm, setPasswordForm] = useState({ newPassword: "", confirmPassword: "" });
+  const [deleteStudent, setDeleteStudent] = useState<StudentProfile | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -153,6 +154,29 @@ const AdminStudents: React.FC = () => {
     setSaving(false);
   };
 
+  const handleDelete = async () => {
+    if (!deleteStudent) return;
+    setSaving(true); setError(""); setSuccess("");
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      setError("Your session has expired. Please sign in again.");
+      setSaving(false);
+      return;
+    }
+    const { data: fnData, error: fnError } = await supabase.functions.invoke("delete-student", {
+      body: { user_id: deleteStudent.user_id },
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    if (!fnError && fnData?.success) {
+      setSuccess(`Student account for ${deleteStudent.full_name} has been deleted.`);
+      setDeleteStudent(null);
+      loadStudents();
+    } else {
+      setError(typeof fnData?.error === "string" ? fnData.error : fnError?.message ?? "Failed to delete student account.");
+    }
+    setSaving(false);
+  };
+
   return (
     <SidebarLayout title="Manage Students">
       <nav className="text-sm text-muted-foreground mb-6">
@@ -213,6 +237,9 @@ const AdminStudents: React.FC = () => {
                       <button onClick={() => toggleActive(s)} className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title={s.is_active ? "Deactivate" : "Activate"}>
                         {s.is_active ? <UserX size={15} /> : <UserCheck size={15} />}
                       </button>
+                      <button onClick={() => { setDeleteStudent(s); setError(""); setSuccess(""); }} className="p-1.5 text-muted-foreground hover:text-incorrect transition-colors" title="Delete account">
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -253,6 +280,25 @@ const AdminStudents: React.FC = () => {
               <button onClick={() => { setEditStudent(null); setError(""); setSuccess(""); }} className="btn-outline flex-1 py-2 text-sm">Cancel</button>
               <button onClick={handleSaveEdit} disabled={saving} className="btn-primary flex-1 py-2 text-sm disabled:opacity-60 disabled:transform-none disabled:hover:shadow-none">
                 {saving ? "Saving..." : "Save changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteStudent && (
+        <div className="fixed inset-0 bg-foreground/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="rounded-xl border border-border bg-card p-6 max-w-md w-full shadow-lg">
+            <h3 className="font-heading font-medium text-foreground mb-4">Delete student account</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Permanently delete the account for <strong>{deleteStudent.full_name}</strong> ({deleteStudent.email})? This will remove their profile, role, and all exam results. They will no longer be able to sign in. This cannot be undone.
+            </p>
+            {error && <p className="text-sm text-incorrect mb-3">{error}</p>}
+            {success && <p className="text-sm text-correct mb-3">{success}</p>}
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => { setDeleteStudent(null); setError(""); setSuccess(""); }} className="btn-outline flex-1 py-2 text-sm">Cancel</button>
+              <button onClick={handleDelete} disabled={saving} className="flex-1 py-2 text-sm rounded-lg border border-incorrect bg-incorrect/10 text-incorrect hover:bg-incorrect/20 disabled:opacity-60 disabled:transform-none">
+                {saving ? "Deleting..." : "Delete account"}
               </button>
             </div>
           </div>

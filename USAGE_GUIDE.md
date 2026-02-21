@@ -2,7 +2,7 @@
 
 Methodist University Ghana, Faculty of Nursing and Midwifery
 
-This guide explains how to use the Nursing Exam Portal: how to create the first administrator account, how students take exams and view results, and how administrators manage tests, students, and results. It is written for **students**, **administrators**, and **staff who perform the one-time administrator setup**.
+This guide explains how to use the Nursing Exam Portal: how to create   administrator account, how students take exams and view results, and how administrators manage tests, students, and results. It is written for **students**, **administrators**, 
 
 **How to access the portal:** Open the web address provided by your institution in your browser.
 
@@ -11,18 +11,18 @@ This guide explains how to use the Nursing Exam Portal: how to create the first 
 ## 1. Introduction
 
 - **Nursing Exam Portal** — Methodist University Ghana, School of Nursing and Midwifery.
-- This guide is for **students**, **administrators**, and **staff who create the first administrator account**.
-- **How to access:** Open the portal in your web browser using the web address provided by your institution.
+- This guide is for **students**, **administrators**, 
+- **How to access:** Open the portal in your web browser using the web address provided by your institutio ie: https://www.mugskillslab.com/
 
 ---
 
 ## 2. Creating an administrator account (one-time setup)
 
-- **When to use:** Before any administrator can log in; usually done once when the portal is first set up.
+- **When to use:** For creating admins
 - **Steps:**
   1. In your browser, go to the **Setup** page (your institution will provide the link, or use the link that goes to "Administrator Setup").
-  2. Enter the **Setup Key** provided by your institution (e.g. **MUG-NURSING-SETUP-2024**).
-  3. Enter **Full Name**, **Email**, and **Password** for the first administrator.
+  2. Enter the **Setup Key** provided ( **MUG-NURSING-SETUP-2024**).
+  3. Enter **Full Name**, **Email**, and **Password** for the  administrator.
   4. Click **Create Admin Account**.
   5. When you see "Admin account created. You can now log in," you will be taken to the **Sign in** page after a few seconds.
   6. Sign in with the same **email** and **password**; you will then see the **Admin** area (overview and sidebar with Manage Tests, Manage Students, Student Results).
@@ -93,7 +93,7 @@ This guide explains how to use the Nursing Exam Portal: how to create the first 
 ### Manage questions (for a test)
 
 - From **Manage Tests**, click **Questions** on a test to open the **Manage Questions** page for that exam. A breadcrumb at the top shows Admin → Manage Tests → [exam name].
-- You can **add**, **edit**, or **delete** questions. For each question you enter: the **question text**, the four options **A**, **B**, **C**, **D**, which option is **correct**, an optional **rationale**, and **marks**.
+- You can **add**, **edit**, or **delete** questions. For each question you enter: the **question text**, the four options **A**, **B**, **C**, **D(optional)**, which option is **correct**, an optional **rationale**, and **marks**.
 
 ### Manage Students
 
