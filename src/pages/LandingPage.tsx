@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import mugLogo from "@/assets/mug-logo.png";
+import { GraduationCap } from "lucide-react";
 
 /**
  * Public landing page — logo, short blurb, Sign in CTA.
@@ -10,7 +11,8 @@ const LandingPage: React.FC = () => {
   return (
     <div className="min-h-screen auth-page-bg flex flex-col">
       <div className="bg-primary-dark border-b border-primary-dark py-2 px-6 shadow-sm">
-        <p className="text-xs text-primary-foreground/70 text-center">
+      <p className="text-xs text-primary-foreground/70 text-center flex items-center justify-center gap-1.5">
+          <GraduationCap size={14} className="flex-shrink-0" />
           Methodist University Ghana — Faculty of Nursing and Midwifery
         </p>
       </div>
